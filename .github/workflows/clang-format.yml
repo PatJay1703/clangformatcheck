@@ -21,23 +21,31 @@ jobs:
       - name: Find modified, new, and PR files
         id: find_files
         run: |
-          # Get changed files in push or PR
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h')
-          else
+          # Check if the repository has at least one previous commit
+          if git rev-parse HEAD~1 >/dev/null 2>&1; then
+            # Get changed files in push (from last commit)
             files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
+          else
+            # No previous commit, so check all C++ files
+            files=$(git ls-files '*.cpp' '*.h')
           fi
 
           # Get newly added files
           new_files=$(git ls-files --others --exclude-standard '*.cpp' '*.h')
 
-          # Combine all relevant files
-          all_files=$(echo -e "$files\n$new_files" | sort -u)
+          # Get changed files in pull request (if applicable)
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h')
+          else
+            pr_files=""
+          fi
 
-          # Output result
+          # Combine all relevant files
+          all_files=$(echo -e "$files\n$new_files\n$pr_files" | sort -u | tr '\n' ' ')
+
+          # Output the result
           echo "FILES=$all_files" >> $GITHUB_ENV
-          echo "Checking files:"
-          echo "$all_files"
+          echo "Checking files: $all_files"
 
       - name: Run clang-format
         run: |
