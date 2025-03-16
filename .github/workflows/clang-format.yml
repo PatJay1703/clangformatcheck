@@ -1,0 +1,25 @@
+name: Clang Format Check
+
+on: [push, pull_request]
+
+jobs:
+  clang-format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: sudo apt-get install -y clang-format
+
+      - name: Run clang-format on modified files
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          files=$(git diff --name-only origin/${{ github.base_ref }} -- '*.cpp' '*.h')
+          if [ -n "$files" ]; then
+            clang-format -i $files
+            git diff --exit-code || (echo "Code not formatted correctly. Run clang-format to fix." && exit 1)
+          else
+            echo "No relevant files modified."
+          fi
+
