@@ -23,25 +23,30 @@ jobs:
         run: |
           # Check if there is a previous commit
           if git rev-parse HEAD~1 >/dev/null 2>&1; then
-            # Get the list of modified files in the last commit
-            files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
+            echo "Found previous commit, checking modified files..."
+            # Get the list of modified files from the last commit (already committed but changed)
+            modified_files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
+            echo "Modified files: $modified_files"
           else
-            # If no previous commit (first commit), no modified files
-            files=""
+            echo "No previous commit found, skipping modified files check."
+            modified_files=""
           fi
           
-          # Get new files (not yet committed but added to git)
+          # Get new files (newly added but not yet committed)
           new_files=$(git ls-files --others --exclude-standard '*.cpp' '*.h')
+          echo "New files: $new_files"
           
           # Get files modified in the pull request (if it is a PR event)
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h')
+            echo "PR files: $pr_files"
           else
             pr_files=""
           fi
           
           # Combine all relevant files: modified, new, and PR files
-          all_files=$(echo -e "$files\n$new_files\n$pr_files" | sort -u | tr '\n' ' ')
+          all_files=$(echo -e "$modified_files\n$new_files\n$pr_files" | sort -u | tr '\n' ' ')
+          echo "All relevant files: $all_files"
 
           # Export the list of files to the environment variable
           echo "FILES=$all_files" >> $GITHUB_ENV
