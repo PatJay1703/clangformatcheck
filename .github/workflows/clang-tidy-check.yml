@@ -22,29 +22,18 @@ jobs:
       - name: Find modified, new, and PR files
         id: find_files
         run: |
-          # Check if the previous commit exists
-          if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
-            # If the previous commit exists, get modified files from the last commit
+          if git rev-parse HEAD~1 >/dev/null 2>&1; then
             files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
           else
-            # If there's no previous commit, use all files in the branch
-            files=""
+            files=$(git ls-files '*.cpp' '*.h')
           fi
-          
-          # Get untracked files (new files not staged)
           new_files=$(git ls-files --others --exclude-standard '*.cpp' '*.h')
-          
-          # Check if it's a pull request and get files changed in PR
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h')
           else
             pr_files=""
           fi
-          
-          # Combine modified files, new files, and PR files, remove duplicates
           all_files=$(echo -e "$files\n$new_files\n$pr_files" | sort -u | tr '\n' ' ')
-          
-          # Set the environment variable for the next step
           echo "FILES=$all_files" >> $GITHUB_ENV
           echo "Checking files: $all_files"
       
@@ -52,9 +41,10 @@ jobs:
         run: |
           # Check if there are any files to process
           if [ -n "$FILES" ]; then
+            echo "Files to check: $FILES"  # Debug line to check which files are being passed
             for file in $FILES; do
-              # Run clang-tidy on each file
-              clang-tidy $file -- -Iinclude
+              # Run clang-tidy on each file with verbose output and all checks enabled
+              clang-tidy $file -checks=* -v -- -Iinclude
               
               # Check if clang-tidy failed (non-zero exit code)
               if [ $? -ne 0 ]; then
