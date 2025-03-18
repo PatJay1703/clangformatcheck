@@ -55,18 +55,23 @@ jobs:
       - name: Run clang-format and show differences
         run: |
           if [ -n "$FILES" ]; then
-            # Run clang-format check without modifying files
-            unformatted_files=""
+            echo "Checking formatting for: $FILES"
+
+            # Check formatting without modifying files
+            format_errors=0
             for file in $FILES; do
               if ! clang-format --dry-run --Werror "$file"; then
-                unformatted_files="$unformatted_files $file"
+                echo "❌ Formatting issues detected in $file"
+                format_errors=1
               fi
             done
 
-            if [ -n "$unformatted_files" ]; then
-              echo "The following files are not formatted correctly: $unformatted_files"
-              echo "Run 'clang-format -i <file>' to fix formatting issues."
+            if [ "$format_errors" -eq 1 ]; then
+              echo "❌ Some files are not formatted correctly!"
+              echo "Run 'clang-format -i <file>' to fix them."
               exit 1
+            else
+              echo "✅ All files are correctly formatted."
             fi
           else
             echo "No relevant files to check."
