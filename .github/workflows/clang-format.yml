@@ -21,27 +21,51 @@ jobs:
       - name: Find modified, new, and PR files
         id: find_files
         run: |
+          # Check if there is a previous commit
           if git rev-parse HEAD~1 >/dev/null 2>&1; then
+            echo "Previous commit found"
             files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
           else
-            files=$(git ls-files '*.cpp' '*.h')
+            echo "Previous commit not found, skipping diff check"
+            files=""
           fi
+
+          # Find new (untracked) files
           new_files=$(git ls-files --others --exclude-standard '*.cpp' '*.h')
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
+
+          # Find files changed in pull request
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h')
           else
             pr_files=""
           fi
-          all_files=$(echo -e "$files\n$new_files\n$pr_files" | sort -u | tr '\n' ' ')
-          echo "FILES=$all_files" >> $GITHUB_ENV
-          echo "Checking files: $all_files"
+
+          # Combine and filter unique file names
+          all_files=$(echo -e "$files\n$new_files\n$pr_files" | sort -u | tr '\n' ' ' | xargs)
+
+          # Set environment variable only if there are files to check
+          if [ -n "$all_files" ]; then
+            echo "FILES=$all_files" >> $GITHUB_ENV
+            echo "Checking files: $all_files"
+          else
+            echo "FILES=" >> $GITHUB_ENV
+            echo "No relevant files to check."
+          fi
+
       - name: Run clang-format and show differences
         run: |
           if [ -n "$FILES" ]; then
-            clang-format -i $FILES
-            if ! git diff --quiet; then
-              echo "Code not formatted correctly. Showing diff:"
-              git diff --color
+            # Run clang-format check without modifying files
+            unformatted_files=""
+            for file in $FILES; do
+              if ! clang-format --dry-run --Werror "$file"; then
+                unformatted_files="$unformatted_files $file"
+              fi
+            done
+
+            if [ -n "$unformatted_files" ]; then
+              echo "The following files are not formatted correctly: $unformatted_files"
+              echo "Run 'clang-format -i <file>' to fix formatting issues."
               exit 1
             fi
           else
