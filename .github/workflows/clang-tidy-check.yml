@@ -15,6 +15,9 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+          
 
       - name: Install clang-tidy
         run: sudo apt-get install -y clang-tidy
