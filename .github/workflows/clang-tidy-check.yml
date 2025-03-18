@@ -22,8 +22,14 @@ jobs:
       - name: Find modified, new, and PR files
         id: find_files
         run: |
-          # Get the files modified in the last commit (including new files)
-          files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
+          # Check if the previous commit exists
+          if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+            # If the previous commit exists, get modified files from the last commit
+            files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
+          else
+            # If there's no previous commit, use all files in the branch
+            files=""
+          fi
           
           # Get untracked files (new files not staged)
           new_files=$(git ls-files --others --exclude-standard '*.cpp' '*.h')
