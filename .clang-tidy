@@ -1,0 +1,12 @@
+---
+Checks:          '*, -clang-analyzer-alpha.*, -clang-analyzer-deadcode.*, readability-*, modernize-*, cppcoreguidelines-*'
+WarningsAsErrors: '*'
+CheckOptions:
+  - key:             readability-braces-around-statements.ShortStatements
+    value:           1
+  - key:             modernize-use-auto.MinTypeNameLength
+    value:           3
+  - key:             cppcoreguidelines-pro-type-restrict.Threshold
+    value:           1
+  - key:             cppcoreguidelines-pro-type-member-init.Threshold
+    value:           2
