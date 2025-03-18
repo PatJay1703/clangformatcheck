@@ -18,22 +18,29 @@ jobs:
       - name: Install clang-format
         run: sudo apt-get install -y clang-format
 
-      - name: Find modified, new, and PR files
+      - name: Find committed and new files
         id: find_files
         run: |
-          if git rev-parse HEAD~1 >/dev/null 2>&1; then
-            files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
-          else
-            files=$(git ls-files '*.cpp' '*.h')
-          fi
-          new_files=$(git ls-files --others --exclude-standard '*.cpp' '*.h')
+          # Get the list of committed files that have changes (modified)
+          modified_files=$(git diff --name-only --diff-filter=M -- '*.cpp' '*.h')   # M stands for modified
+
+          # Get new files that are being pushed (not tracked by Git before)
+          new_files=$(git ls-files --others --exclude-standard '*.cpp' '*.h')        # List of new untracked files
+
+          # Get files that are part of the pull request and changed compared to 'origin/main'
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h')
           else
             pr_files=""
           fi
-          all_files=$(echo -e "$files\n$new_files\n$pr_files" | sort -u | tr '\n' ' ')
+
+          # Combine all file lists into a single list (modified and new)
+          all_files=$(echo -e "$modified_files\n$new_files\n$pr_files" | sort -u | tr '\n' ' ')
+
+          # Set the combined list of files to the GitHub Actions environment variable
           echo "FILES=$all_files" >> $GITHUB_ENV
+
+          # Output the files being checked
           echo "Checking files: $all_files"
 
       - name: Run clang-format and show differences
