@@ -43,10 +43,16 @@ jobs:
           # Output the files being checked
           echo "Checking files: $all_files"
 
+      - name: Debug clang-format output
+        run: |
+          # Print the files to verify what's being checked
+          echo "Files to be formatted: $FILES"
+          
       - name: Run clang-format and show differences
         run: |
           if [ -n "$FILES" ]; then
             clang-format -i $FILES
+            git diff --check  # Check for whitespace errors
             if ! git diff --quiet; then
               echo "Code not formatted correctly. Showing diff:"
               git diff --color
