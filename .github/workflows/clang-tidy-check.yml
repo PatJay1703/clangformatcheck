@@ -1,1 +1,49 @@
 
+name: Clang Tidy Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  clang-tidy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install clang-tidy
+        run: sudo apt-get install -y clang-tidy
+
+      - name: Find modified, new, and PR files
+        id: find_files
+        run: |
+          if git rev-parse HEAD~1 >/dev/null 2>&1; then
+            files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
+          else
+            files=$(git ls-files '*.cpp' '*.h')
+          fi
+          new_files=$(git ls-files --others --exclude-standard '*.cpp' '*.h')
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h')
+          else
+            pr_files=""
+          fi
+          all_files=$(echo -e "$files\n$new_files\n$pr_files" | sort -u | tr '\n' ' ')
+          echo "FILES=$all_files" >> $GITHUB_ENV
+          echo "Checking files: $all_files"
+
+      - name: Run clang-tidy on files
+        run: |
+          if [ -n "$FILES" ]; then
+            for file in $FILES; do
+              clang-tidy $file -- -Iinclude
+            done
+          else
+            echo "No relevant files to check."
+          fi
