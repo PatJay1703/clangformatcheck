@@ -25,8 +25,10 @@ jobs:
           if git rev-parse HEAD~1 >/dev/null 2>&1; then
             # Get changed files in push (from last commit)
             files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
+            echo "Changed files: $files"
           else
             # No previous commit, so check all C++ files
+            echo "No previous commits"
             files=$(git ls-files '*.cpp' '*.h')
           fi
           
@@ -49,8 +51,8 @@ jobs:
 
       - name: Run clang-format and show differences
         run: |
-          if [ -n "$FILES" ]; then
-            clang-format -i $FILES
+          if [ -n "$all_files" ]; then
+            clang-format -i $all_files
             # Check for formatting issues
             if ! git diff --quiet; then
               echo "Code not formatted correctly. Run clang-format to fix."
