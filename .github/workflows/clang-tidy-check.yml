@@ -44,7 +44,8 @@ jobs:
             echo "Files to check: $FILES"  # Debug line to check which files are being passed
             for file in $FILES; do
               # Run clang-tidy on each file with verbose output and all checks enabled
-              clang-tidy $file -checks=* -v -- -Iinclude
+              clang-tidy $file -checks=* -- -Iinclude
+
               
               # Check if clang-tidy failed (non-zero exit code)
               if [ $? -ne 0 ]; then
