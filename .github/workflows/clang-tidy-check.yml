@@ -22,30 +22,26 @@ jobs:
       - name: Find modified, new, and PR files
         id: find_files
         run: |
-          # Check if the previous commit exists
-          if git rev-parse HEAD~1 >/dev/null 2>&1; then
-            files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
-          else
-            files=$(git ls-files '*.cpp' '*.h')
-          fi
-
-          # Get untracked files
+          # Get the files modified in the last commit (including new files)
+          files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
+          
+          # Get untracked files (new files not staged)
           new_files=$(git ls-files --others --exclude-standard '*.cpp' '*.h')
-
-          # Check if it's a pull request
+          
+          # Check if it's a pull request and get files changed in PR
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h')
           else
             pr_files=""
           fi
-
-          # Combine all files (modified, new, and PR files) and remove duplicates
+          
+          # Combine modified files, new files, and PR files, remove duplicates
           all_files=$(echo -e "$files\n$new_files\n$pr_files" | sort -u | tr '\n' ' ')
           
           # Set the environment variable for the next step
           echo "FILES=$all_files" >> $GITHUB_ENV
           echo "Checking files: $all_files"
-
+      
       - name: Run clang-tidy on files
         run: |
           # Check if there are any files to process
