@@ -22,6 +22,7 @@ jobs:
         id: find_files
         run: |
           if git rev-parse HEAD~1 >/dev/null 2>&1; then
+            echo "commit found"
             files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
           else
             files=$(git ls-files '*.cpp' '*.h')
