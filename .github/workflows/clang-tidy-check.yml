@@ -1,4 +1,3 @@
-
 name: Clang Tidy Check
 
 on:
@@ -12,7 +11,7 @@ on:
 jobs:
   clang-tidy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -23,26 +22,47 @@ jobs:
       - name: Find modified, new, and PR files
         id: find_files
         run: |
+          # Check if the previous commit exists
           if git rev-parse HEAD~1 >/dev/null 2>&1; then
             files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
           else
             files=$(git ls-files '*.cpp' '*.h')
           fi
+
+          # Get untracked files
           new_files=$(git ls-files --others --exclude-standard '*.cpp' '*.h')
+
+          # Check if it's a pull request
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h')
           else
             pr_files=""
           fi
+
+          # Combine all files (modified, new, and PR files) and remove duplicates
           all_files=$(echo -e "$files\n$new_files\n$pr_files" | sort -u | tr '\n' ' ')
+          
+          # Set the environment variable for the next step
           echo "FILES=$all_files" >> $GITHUB_ENV
           echo "Checking files: $all_files"
 
       - name: Run clang-tidy on files
         run: |
+          # Check if there are any files to process
           if [ -n "$FILES" ]; then
             for file in $FILES; do
+              # Run clang-tidy on each file
               clang-tidy $file -- -Iinclude
+              
+              # Check if clang-tidy failed (non-zero exit code)
+              if [ $? -ne 0 ]; then
+                echo "Clang-tidy check failed for file: $file"
+                echo "Displaying diff for the failed file: $file"
+                
+                # Show the diff of the changes
+                git diff $file
+                exit 1 # Exit with error to fail the job if clang-tidy fails
+              fi
             done
           else
             echo "No relevant files to check."
