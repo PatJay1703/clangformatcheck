@@ -63,8 +63,12 @@ jobs:
             modified_files=$(git diff --name-only --diff-filter=ACMRTUXB origin/main...HEAD -- '*.c' '*.cpp' '*.cc' '*.cxx' \
               '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
 
+            echo "modified files:$modified_files"
+
             new_files=$(git ls-files --others --exclude-standard -- '*.c' '*.cpp' '*.cc' '*.cxx' \
               '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
+
+            echo "new_files:$new_files"
 
             all_files="$modified_files $new_files"
           fi
