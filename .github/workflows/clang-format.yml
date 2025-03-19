@@ -32,7 +32,6 @@ on:
       - '**/*.h'
       - '**/*.proto'
       - '**/*.cs'
-    
 
 jobs:
   clang-format:
@@ -48,9 +47,25 @@ jobs:
 
       - name: Run clang-format and show differences
         run: |
-          # Run clang-format on the relevant files directly
-          clang-format -i $(git diff --name-only --diff-filter=ACMRTUXB origin/main...HEAD -- '*.c' '*.cpp' '*.cc' '*.cxx' \
-                    '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
+          # Get the list of modified files from the current branch against the main branch
+          modified_files=$(git diff --name-only --diff-filter=ACMRTUXB origin/main...HEAD -- '*.c' '*.cpp' '*.cc' '*.cxx' \
+            '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
+
+          # Get the list of new files in the current branch that are not tracked yet
+          new_files=$(git ls-files --others --exclude-standard -- '*.c' '*.cpp' '*.cc' '*.cxx' \
+            '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
+
+          # Get the list of files modified in a different branch during the merge process
+          merge_modified_files=$(git diff --name-only --diff-filter=AM origin/main...MERGE_HEAD -- '*.c' '*.cpp' '*.cc' '*.cxx' \
+            '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
+
+          # Combine all relevant files into one list (modified, new, and merge modified)
+          all_files="$modified_files $new_files $merge_modified_files"
+
+          # Run clang-format on all relevant files
+          if [ -n "$all_files" ]; then
+            clang-format -i $all_files
+          fi
 
           # Check if the code is formatted correctly
           if ! git diff --quiet; then
