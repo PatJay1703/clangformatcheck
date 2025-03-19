@@ -71,13 +71,19 @@ jobs:
 
             # Exclude unwanted files from the previous commit as well
             if [ -n "$EXCLUSIONS" ]; then
-              commit_files=$(echo "$commit_files" | grep -Ev "$EXCLUSIONS")
+              commit_files_filtered=""
+              while IFS= read -r file; do
+                if ! echo "$file" | grep -Eq "$EXCLUSIONS"; then
+                  commit_files_filtered+="$file"$'\n'
+                fi
+              done <<< "$commit_files"
+              commit_files="$commit_files_filtered"
             fi
           else
             commit_files=""
           fi
 
-          echo $commit_files
+          echo "Commit files: $commit_files"
 
           # Check modified files in the pull request
           if [ "${{ github.event_name }}" == "pull_request" ]; then
@@ -86,18 +92,21 @@ jobs:
               '*.proto' '*.hlsl' '*.asm' '*.py' '*.ts' '*.tsx' '*.css' '*.scss' \
               '*.lua')
 
-
-          echo "srcond last step"
-
             # Exclude unwanted files from the pull request
             if [ -n "$EXCLUSIONS" ]; then
-              pr_files=$(echo "$pr_files" | grep -Ev "$EXCLUSIONS")
+              pr_files_filtered=""
+              while IFS= read -r file; do
+                if ! echo "$file" | grep -Eq "$EXCLUSIONS"; then
+                  pr_files_filtered+="$file"$'\n'
+                fi
+              done <<< "$pr_files"
+              pr_files="$pr_files_filtered"
             fi
           else
             pr_files=""
           fi
 
-          echo "last step"
+          echo "PR files: $pr_files"
 
           # Combine all modified, PR, and new files
           all_files=$(echo -e "$files\n$commit_files\n$pr_files" | sort -u | tr '\n' ' ')
