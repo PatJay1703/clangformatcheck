@@ -7,7 +7,7 @@ public:
     std::cout<<"Hello, world!"<<std::endl;
   }
 private:
-  int x,y;  
+  int x,y,  z;  
 };
 
 int main() {
