@@ -76,6 +76,7 @@ jobs:
             if [ -n "$EXCLUSIONS" ]; then
               commit_files_filtered=""
               while IFS= read -r file; do
+                # Exclude file if it matches the exclusion pattern
                 if ! echo "$file" | grep -Eq "$EXCLUSIONS"; then
                   commit_files_filtered+="$file"$'\n'
                 fi
@@ -95,10 +96,14 @@ jobs:
               '*.proto' '*.hlsl' '*.asm' '*.py' '*.ts' '*.tsx' '*.css' '*.scss' \
               '*.lua')
 
+            echo "PR files:"
+            echo "$pr_files"
+
             # Exclude unwanted files from the pull request
             if [ -n "$EXCLUSIONS" ]; then
               pr_files_filtered=""
               while IFS= read -r file; do
+                # Exclude file if it matches the exclusion pattern
                 if ! echo "$file" | grep -Eq "$EXCLUSIONS"; then
                   pr_files_filtered+="$file"$'\n'
                 fi
@@ -109,7 +114,7 @@ jobs:
             pr_files=""
           fi
 
-          echo "PR files: $pr_files"
+          echo "PR files after exclusion: $pr_files"
 
           # Combine all modified, PR, and new files
           all_files=$(echo -e "$files\n$commit_files\n$pr_files" | sort -u | tr '\n' ' ')
