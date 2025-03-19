@@ -77,6 +77,8 @@ jobs:
             commit_files=""
           fi
 
+          echo $commit_files
+
           # Check modified files in the pull request
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
