@@ -84,6 +84,9 @@ jobs:
               '*.proto' '*.hlsl' '*.asm' '*.py' '*.ts' '*.tsx' '*.css' '*.scss' \
               '*.lua')
 
+
+          echo "srcond last step"
+
             # Exclude unwanted files from the pull request
             if [ -n "$EXCLUSIONS" ]; then
               pr_files=$(echo "$pr_files" | grep -Ev "$EXCLUSIONS")
@@ -91,6 +94,8 @@ jobs:
           else
             pr_files=""
           fi
+
+          echo "last step"
 
           # Combine all modified, PR, and new files
           all_files=$(echo -e "$files\n$commit_files\n$pr_files" | sort -u | tr '\n' ' ')
