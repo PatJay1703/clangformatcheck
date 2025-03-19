@@ -5,8 +5,9 @@ on:
     branches:
       - main
     paths-ignore:
-      -'.github/workflows/clang-format.yml'
-      -'.github/workflows/clang-tidy-check.yml'
+     - '.github/workflows/clang-format.yml'
+     - '.github/workflows/clang-tidy-check.yml'
+
   pull_request:
     branches:
       - main
