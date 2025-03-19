@@ -72,22 +72,7 @@ jobs:
             echo "modified_files:"
             echo "$commit_files"
 
-            # Exclude unwanted files from the previous commit as well
-            if [ -n "$EXCLUSIONS" ]; then
-              commit_files_filtered=""
-              while IFS= read -r file; do
-                # Exclude file if it matches the exclusion pattern
-                if ! echo "$file" | grep -Eq "$EXCLUSIONS"; then
-                  commit_files_filtered+="$file"$'\n'
-                fi
-              done <<< "$commit_files"
-              commit_files="$commit_files_filtered"
-            fi
-          else
-            commit_files=""
-          fi
-
-          echo "Commit files: $commit_files"
+           
 
           # Check modified files in the pull request
           if [ "${{ github.event_name }}" == "pull_request" ]; then
@@ -99,22 +84,6 @@ jobs:
             echo "PR files:"
             echo "$pr_files"
 
-            # Exclude unwanted files from the pull request
-            if [ -n "$EXCLUSIONS" ]; then
-              pr_files_filtered=""
-              while IFS= read -r file; do
-                # Exclude file if it matches the exclusion pattern
-                if ! echo "$file" | grep -Eq "$EXCLUSIONS"; then
-                  pr_files_filtered+="$file"$'\n'
-                fi
-              done <<< "$pr_files"
-              pr_files="$pr_files_filtered"
-            fi
-          else
-            pr_files=""
-          fi
-
-          echo "PR files after exclusion: $pr_files"
 
           # Combine all modified, PR, and new files
           all_files=$(echo -e "$files\n$commit_files\n$pr_files" | sort -u | tr '\n' ' ')
