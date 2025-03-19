@@ -47,20 +47,27 @@ jobs:
 
       - name: Run clang-format and show differences
         run: |
-          # Get the list of modified files from the current branch against the main branch
-          modified_files=$(git diff --name-only --diff-filter=ACMRTUXB origin/main...HEAD -- '*.c' '*.cpp' '*.cc' '*.cxx' \
-            '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
+          # Check if it's a pull request
+          if [[ $GITHUB_EVENT_NAME == "pull_request" ]]; then
+            # PR changes - fetch the files modified in the PR or new commits to the PR
+            pr_modified_files=$(git diff --name-only --diff-filter=ACMRTUXB origin/main...$GITHUB_SHA -- '*.c' '*.cpp' '*.cc' '*.cxx' \
+              '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
+            
+            pr_new_files=$(git ls-files --others --exclude-standard -- '*.c' '*.cpp' '*.cc' '*.cxx' \
+              '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
+            
+            all_files="$pr_modified_files $pr_new_files"
 
-          # Get the list of new files in the current branch that are not tracked yet
-          new_files=$(git ls-files --others --exclude-standard -- '*.c' '*.cpp' '*.cc' '*.cxx' \
-            '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
+          else
+            # Regular push to main branch
+            modified_files=$(git diff --name-only --diff-filter=ACMRTUXB origin/main...HEAD -- '*.c' '*.cpp' '*.cc' '*.cxx' \
+              '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
 
-          # Get the list of files modified in a different branch during the merge process
-          merge_modified_files=$(git diff --name-only --diff-filter=AM origin/main...MERGE_HEAD -- '*.c' '*.cpp' '*.cc' '*.cxx' \
-            '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
+            new_files=$(git ls-files --others --exclude-standard -- '*.c' '*.cpp' '*.cc' '*.cxx' \
+              '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
 
-          # Combine all relevant files into one list (modified, new, and merge modified)
-          all_files="$modified_files $new_files $merge_modified_files"
+            all_files="$modified_files $new_files"
+          fi
 
           # Run clang-format on all relevant files
           if [ -n "$all_files" ]; then
