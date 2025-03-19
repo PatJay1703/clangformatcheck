@@ -42,24 +42,36 @@ jobs:
         with:
           fetch-depth: 0  # Ensures the full history is fetched
 
+      - name: Fetch latest changes from remote
+        run: git fetch origin
+
       - name: Install clang-format
         run: sudo apt-get install -y clang-format
 
       - name: Run clang-format and show differences
         run: |
+          # Debugging to check the current branch
+          echo "Current branch: $(git branch --show-current)"
+
           # Check if it's a pull request
           if [[ $GITHUB_EVENT_NAME == "pull_request" ]]; then
+            echo "This is a PR"
             # PR changes - fetch the files modified in the PR or new commits to the PR
             pr_modified_files=$(git diff --name-only --diff-filter=ACMRTUXB origin/main...$GITHUB_SHA -- '*.c' '*.cpp' '*.cc' '*.cxx' \
               '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
             
+            echo "PR modified files: $pr_modified_files"
+
             pr_new_files=$(git ls-files --others --exclude-standard -- '*.c' '*.cpp' '*.cc' '*.cxx' \
               '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
+            
+            echo "PR new files: $pr_new_files"
             
             all_files="$pr_modified_files $pr_new_files"
 
           else
             # Regular push to main branch
+            echo "This is a push to main"
             modified_files=$(git diff --name-only --diff-filter=ACMRTUXB origin/main...HEAD -- '*.c' '*.cpp' '*.cc' '*.cxx' \
               '*.java' '*.js' '*.json' '*.m' '*.h' '*.proto' '*.cs')
 
@@ -83,4 +95,4 @@ jobs:
             echo "Code not formatted correctly. Showing diff:"
             git diff --color
             exit 1
-          fi
+          fi   
