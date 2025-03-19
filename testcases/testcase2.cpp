@@ -4,7 +4,7 @@ class MyClass {
 public:
   MyClass(int a, int b):x(a), y(b){} 
   void display() {
-    std::cout<<"Hello, world!"<<std::endl;
+    std::cout<<"Hello,,,, world!"<<std::endl;
   }
 private:
   int   x,y,  z,q,  r;  
