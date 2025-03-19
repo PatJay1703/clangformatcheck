@@ -41,18 +41,29 @@ jobs:
           files=$(git ls-files -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' '*.hpp' '*.hxx' \
             '*.f' '*.f90' '*.s' '*.S' '*.cu' '*.cuf' '*.cl' '*.proto' '*.hlsl' \
             '*.asm' '*.py' '*.ts' '*.tsx' '*.css' '*.scss' '*.lua')
-          echo "all files extracted"
+          echo "All files extracted:"
+          echo "$files"
 
           # If there are exclusions, filter out the files that match the patterns
           if [ -n "$EXCLUSIONS" ]; then
-            files=$(echo "$files" | grep -Ev "$EXCLUSIONS")
+            echo "Applying exclusions..."
+            filtered_files=""
+            while IFS= read -r file; do
+              # Exclude files based on exclusion patterns
+              if ! echo "$file" | grep -Eq "$EXCLUSIONS"; then
+                filtered_files+="$file"$'\n'  # Append matching file to the list
+              fi
+            done <<< "$files"
+            files="$filtered_files"  # Update the files list
           fi
           
+          # Debugging: Print the list of filtered files
+          echo "Filtered files (after exclusions):"
+          echo "$files"
 
-          echo "removed not needed files"
           # Check modified files from the previous commit (HEAD~1)
           if git rev-parse HEAD~1 >/dev/null 2>&1; then
-            echo "commit found"
+            echo "Commit found"
             commit_files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
               '*.hpp' '*.hxx' '*.f' '*.f90' '*.s' '*.S' '*.cu' '*.cuf' '*.cl' \
               '*.proto' '*.hlsl' '*.asm' '*.py' '*.ts' '*.tsx' '*.css' '*.scss' \
