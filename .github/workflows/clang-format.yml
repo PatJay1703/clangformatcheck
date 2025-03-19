@@ -37,31 +37,7 @@ jobs:
       - name: Find modified, new, and PR files
         id: find_files
         run: |
-          # Get the list of files to include (no exclusions yet)
-          files=$(git ls-files -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' '*.hpp' '*.hxx' \
-            '*.f' '*.f90' '*.s' '*.S' '*.cu' '*.cuf' '*.cl' '*.proto' '*.hlsl' \
-            '*.asm' '*.py' '*.ts' '*.tsx' '*.css' '*.scss' '*.lua')
-          echo "All files extracted:"
-          echo "$files"
-
-          # If there are exclusions, filter out the files that match the patterns
-          if [ -n "$EXCLUSIONS" ]; then
-            echo "Applying exclusions..."
-            filtered_files=""
-            while IFS= read -r file; do
-              # Exclude files based on exclusion patterns
-              if ! echo "$file" | grep -Eq "$EXCLUSIONS"; then
-                filtered_files+="$file"$'\n'  # Append matching file to the list
-              fi
-            done <<< "$files"
-            files="$filtered_files"  # Update the files list
-          fi
-          
-          # Debugging: Print the list of filtered files
-          echo "Filtered files (after exclusions):"
-          echo "$files"
-
-          # Check modified files from the previous commit (HEAD~1)
+          # Find all modified files in the last commit (HEAD~1)
           if git rev-parse HEAD~1 >/dev/null 2>&1; then
             echo "Commit found"
             commit_files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
@@ -69,12 +45,20 @@ jobs:
               '*.proto' '*.hlsl' '*.asm' '*.py' '*.ts' '*.tsx' '*.css' '*.scss' \
               '*.lua')
 
-            echo "modified_files:"
+            echo "Modified files:"
             echo "$commit_files"
+          fi
 
-           
+          # Find all newly added files (uncommitted)
+          new_files=$(git ls-files --others --exclude-standard -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
+              '*.hpp' '*.hxx' '*.f' '*.f90' '*.s' '*.S' '*.cu' '*.cuf' '*.cl' \
+              '*.proto' '*.hlsl' '*.asm' '*.py' '*.ts' '*.tsx' '*.css' '*.scss' \
+              '*.lua')
 
-          # Check modified files in the pull request
+          echo "Newly added files:"
+          echo "$new_files"
+
+          # Check modified files in the pull request (if it's a PR)
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
               '*.hpp' '*.hxx' '*.f' '*.f90' '*.s' '*.S' '*.cu' '*.cuf' '*.cl' \
@@ -83,10 +67,11 @@ jobs:
 
             echo "PR files:"
             echo "$pr_files"
+          fi
 
+          # Combine modified, new, and PR files
+          all_files=$(echo -e "$commit_files\n$new_files\n$pr_files" | sort -u)
 
-          # Combine all modified, PR, and new files
-          all_files=$(echo -e "$files\n$commit_files\n$pr_files" | sort -u | tr '\n' ' ')
           echo "FILES=$all_files" >> $GITHUB_ENV
           echo "Checking files: $all_files"
 
