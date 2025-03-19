@@ -1,0 +1,20 @@
+# Exclude Markdown files
+*.md
+
+# Exclude YAML files
+*.yml
+*.yaml
+
+# Exclude JSON files
+*.json
+
+# Exclude shell scripts
+*.sh
+
+# Exclude log files
+*.log
+
+# Add any other extensions or patterns to exclude
+*.exe
+*.zip
+
