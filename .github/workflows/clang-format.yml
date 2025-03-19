@@ -87,3 +87,4 @@ jobs:
             fi
           else
             echo "No relevant files to check."
+          fi 
