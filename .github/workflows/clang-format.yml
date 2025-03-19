@@ -29,7 +29,7 @@ jobs:
       - name: Create list of files to exclude
         id: create_exclusions
         run: |
-          # Create a regex pattern to exclude files based on the .clang-format-ignore file
+          # Read the exclusion patterns from the .clang-format-ignore file and join them using '|'
           exclusions=$(cat .clang-format-ignore | tr '\n' '|' | sed 's/|$//')
           echo "Exclusions: $exclusions"
           echo "EXCLUSIONS=$exclusions" >> $GITHUB_ENV
