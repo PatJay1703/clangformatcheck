@@ -16,9 +16,7 @@ on:
       - '**/*.h'
       - '**/*.proto'
       - '**/*.cs'
-    paths-ignore:
-      - '.github/workflows/clang-format.yml'
-      - '.github/workflows/clang-tidy-check.yml'
+    
   pull_request:
     branches:
       - main
@@ -34,9 +32,7 @@ on:
       - '**/*.h'
       - '**/*.proto'
       - '**/*.cs'
-    paths-ignore:
-      - '.github/workflows/clang-format.yml'
-      - '.github/workflows/clang-tidy-check.yml'
+    
 
 jobs:
   clang-format:
