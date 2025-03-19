@@ -5,15 +5,14 @@ on:
     branches:
       - main
     paths-ignore:
-      -'.github/workflows/clang-format.yml'
-      -'.github/workflows/clang-tidy-check.yml'
+      - '.github/workflows/clang-format.yml'
+      - '.github/workflows/clang-tidy-check.yml'
   pull_request:
     branches:
       - main
     paths-ignore:
       - '.github/workflows/clang-format.yml'
       - '.github/workflows/clang-tidy-check.yml'
-  
 
 jobs:
   clang-format:
@@ -24,29 +23,66 @@ jobs:
         with:
           fetch-depth: 0  # Ensures the full history is fetched
 
-        
-
       - name: Install clang-format
         run: sudo apt-get install -y clang-format
+
+      - name: Create list of files to exclude
+        id: create_exclusions
+        run: |
+          # Create a regex pattern to exclude files based on the .clang-format-ignore file
+          exclusions=$(cat .clang-format-ignore | tr '\n' '|' | sed 's/|$//')
+          echo "Exclusions: $exclusions"
+          echo "EXCLUSIONS=$exclusions" >> $GITHUB_ENV
 
       - name: Find modified, new, and PR files
         id: find_files
         run: |
+          # Get the list of files to include (no exclusions yet)
+          files=$(git ls-files -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' '*.hpp' '*.hxx' \
+            '*.f' '*.f90' '*.s' '*.S' '*.cu' '*.cuf' '*.cl' '*.proto' '*.hlsl' \
+            '*.asm' '*.py' '*.ts' '*.tsx' '*.css' '*.scss' '*.lua')
+
+          # If there are exclusions, filter out the files that match the patterns
+          if [ -n "$EXCLUSIONS" ]; then
+            files=$(echo "$files" | grep -Ev "$EXCLUSIONS")
+          fi
+
+          # Check modified files from the previous commit (HEAD~1)
           if git rev-parse HEAD~1 >/dev/null 2>&1; then
             echo "commit found"
-            files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
+            commit_files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
+              '*.hpp' '*.hxx' '*.f' '*.f90' '*.s' '*.S' '*.cu' '*.cuf' '*.cl' \
+              '*.proto' '*.hlsl' '*.asm' '*.py' '*.ts' '*.tsx' '*.css' '*.scss' \
+              '*.lua')
+
+            # Exclude unwanted files from the previous commit as well
+            if [ -n "$EXCLUSIONS" ]; then
+              commit_files=$(echo "$commit_files" | grep -Ev "$EXCLUSIONS")
+            fi
           else
-            files=$(git ls-files '*.cpp' '*.h')
+            commit_files=""
           fi
-          
+
+          # Check modified files in the pull request
           if [ "${{ github.event_name }}" == "pull_request" ]; then
-            pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h')
+            pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
+              '*.hpp' '*.hxx' '*.f' '*.f90' '*.s' '*.S' '*.cu' '*.cuf' '*.cl' \
+              '*.proto' '*.hlsl' '*.asm' '*.py' '*.ts' '*.tsx' '*.css' '*.scss' \
+              '*.lua')
+
+            # Exclude unwanted files from the pull request
+            if [ -n "$EXCLUSIONS" ]; then
+              pr_files=$(echo "$pr_files" | grep -Ev "$EXCLUSIONS")
+            fi
           else
             pr_files=""
           fi
-          all_files=$(echo -e "$files\n$new_files\n$pr_files" | sort -u | tr '\n' ' ')
+
+          # Combine all modified, PR, and new files
+          all_files=$(echo -e "$files\n$commit_files\n$pr_files" | sort -u | tr '\n' ' ')
           echo "FILES=$all_files" >> $GITHUB_ENV
           echo "Checking files: $all_files"
+
       - name: Run clang-format and show differences
         run: |
           if [ -n "$FILES" ]; then
