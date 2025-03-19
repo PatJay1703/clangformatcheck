@@ -78,7 +78,10 @@ jobs:
       - name: Run clang-format and show differences
         run: |
           if [ -n "$FILES" ]; then
-            clang-format -i $FILES
+            # Ensure files are properly formatted before passing to clang-format
+            echo "$FILES" | tr '\n' ' ' | xargs clang-format -i
+
+            # Check if any file has changes after formatting
             if ! git diff --quiet; then
               echo "Code not formatted correctly. Showing diff:"
               git diff --color
