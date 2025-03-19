@@ -41,12 +41,15 @@ jobs:
           files=$(git ls-files -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' '*.hpp' '*.hxx' \
             '*.f' '*.f90' '*.s' '*.S' '*.cu' '*.cuf' '*.cl' '*.proto' '*.hlsl' \
             '*.asm' '*.py' '*.ts' '*.tsx' '*.css' '*.scss' '*.lua')
+          echo "all files extracted"
 
           # If there are exclusions, filter out the files that match the patterns
           if [ -n "$EXCLUSIONS" ]; then
             files=$(echo "$files" | grep -Ev "$EXCLUSIONS")
           fi
+          
 
+          echo "removed not needed files"
           # Check modified files from the previous commit (HEAD~1)
           if git rev-parse HEAD~1 >/dev/null 2>&1; then
             echo "commit found"
