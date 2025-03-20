@@ -4,16 +4,29 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-     - '.github/workflows/clang-format.yml'
-     - '.github/workflows/clang-tidy-check.yml'
+    paths:
+       -'**/*.c'
+       -'**/*.cc'
+       -'**/*.cpp'
+       -'**/*.cxx'
+       -'**/*.h'
+       -'**/*.hh'
+       -'**/*.hpp'
+       -'**/*.hxx'
 
   pull_request:
     branches:
       - main
-    paths-ignore:
-      - '.github/workflows/clang-format.yml'
-      - '.github/workflows/clang-tidy-check.yml'
+    paths:
+       -'**/*.c'
+       -'**/*.cc'
+       -'**/*.cpp'
+       -'**/*.cxx'
+       -'**/*.h'
+       -'**/*.hh'
+       -'**/*.hpp'
+       -'**/*.hxx'
+       
 
 jobs:
   clang-tidy:
