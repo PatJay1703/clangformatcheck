@@ -74,12 +74,13 @@ jobs:
               if [ $? -ne 0 ]; then
                 echo "Clang-tidy check failed for file: $file"
                 echo "Displaying diff for the failed file: $file"
+                echo"""
                 
                 # Show the diff of the changes
                 git diff $file
                 exit 1 # Exit with error to fail the job if clang-tidy fails
               fi
             done
-          else
+          els
             echo "No relevant files to check."
           fi

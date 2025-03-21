@@ -60,7 +60,6 @@ jobs:
             files=$(git ls-files '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
                     '*.proto' '*.cs' '*.m' '*.java' '*.js' '*.json')
           fi
-
           # Check for modified files in the pull request (if it's a PR)
           if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
             pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
@@ -68,13 +67,11 @@ jobs:
           else
             pr_files=""
           fi
-
           # Combine all files (modified, new, and PR files)
           all_files=$(echo -e "$files\n$pr_files" | sort -u | tr '\n' ' ')
           
           echo "FILES=$all_files" >> $GITHUB_ENV
           echo "Checking files: $all_files"
-
       - name: Run clang-format and show differences
         run: |
           if [ -n "$FILES" ]; then
