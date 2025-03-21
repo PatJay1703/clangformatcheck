@@ -65,10 +65,12 @@ jobs:
           }
 
           for file in "$@"; do
-            header_check "$file"
+            check_header "$file"
           done
-          ' >> check_header.sh
+          ' >> header_check.sh
           chmod +x header_check.sh
+          # Debugging step to confirm script creation
+          cat header_check.sh
 
       - name: Debug - Check files to be checked
         run: |
