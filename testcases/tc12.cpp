@@ -6,7 +6,7 @@ class test  // Class name should be PascalCase (Test)
 { 
     public: 
     int a,b;   // Bad practice: No access specifiers, no naming convention
-    test(){ a=1; b=2;}  // No indentation, initialization in constructor body
+    test(){ a=3; b=2;}  // No indentation, initialization in constructor body
 
     void foo (int x, int y ){ cout << x+y;}  // No spaces, no proper indentation
 };
