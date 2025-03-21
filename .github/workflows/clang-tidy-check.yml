@@ -1,21 +1,18 @@
 name: Clang Tidy Check
 
 on:
-  
-
   pull_request:
     branches:
       - main
     paths:
-       -'**/*.c'
-       -'**/*.cc'
-       -'**/*.cpp'
-       -'**/*.cxx'
-       -'**/*.h'
-       -'**/*.hh'
-       -'**/*.hpp'
-       -'**/*.hxx'
-       
+      - '**/*.c'
+      - '**/*.cc'
+      - '**/*.cpp'
+      - '**/*.cxx'
+      - '**/*.h'
+      - '**/*.hh'
+      - '**/*.hpp'
+      - '**/*.hxx'
 
 jobs:
   clang-tidy:
@@ -25,8 +22,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
-          
+          fetch-depth: 0
 
       - name: Install clang-tidy
         run: sudo apt-get install -y clang-tidy
@@ -34,16 +30,14 @@ jobs:
       - name: Find modified, new, and PR files
         id: find_files
         run: |
-          # Check for modified files in the pull request (if it's a PR)
           if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
             pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
                     '*.proto' '*.cs' '*.m' '*.java' '*.js' '*.json')
           else
             pr_files=""
           fi
-
           # Combine all files (modified, new, and PR files)
-          all_files=$(echo -e "$files\n$pr_files" | sort -u | tr '\n' ' ')
+          all_files=$(echo -e "$pr_files" | sort -u | tr '\n' ' ')
           
           echo "FILES=$all_files" >> $GITHUB_ENV
           echo "Checking files: $all_files"
@@ -56,16 +50,15 @@ jobs:
             for file in $FILES; do
               # Run clang-tidy on each file with verbose output and all checks enabled
               clang-tidy $file -checks=* -- -Iinclude
-
               
               # Check if clang-tidy failed (non-zero exit code)
               if [ $? -ne 0 ]; then
                 echo "Clang-tidy check failed for file: $file"
                 echo "Displaying diff for the failed file: $file"
-                
-                # Show the diff of the changes
                 git diff $file
-                exit 1 # Exit with error to fail the job if clang-tidy fails
+                
+                # Exit with error to fail the job if clang-tidy fails
+                exit 1
               fi
             done
           else
