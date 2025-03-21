@@ -1,21 +1,7 @@
 name: Clang Format Check
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - '**/*.c'
-      - '**/*.cpp'
-      - '**/*.cc'
-      - '**/*.cxx'
-      - '**/*.java'
-      - '**/*.js'
-      - '**/*.json'
-      - '**/*.m'
-      - '**/*.h'
-      - '**/*.proto'
-      - '**/*.cs'
+  
     
   pull_request:
     branches:
@@ -51,15 +37,7 @@ jobs:
       - name: Find modified, new, and PR files
         id: find_files
         run: |
-          # Check for modified files in the last commit (HEAD~1)
-          if git rev-parse HEAD~1 >/dev/null 2>&1; then
-            echo "Commit found"
-            files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
-                    '*.proto' '*.cs' '*.m' '*.java' '*.js' '*.json')
-          else
-            files=$(git ls-files '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
-                    '*.proto' '*.cs' '*.m' '*.java' '*.js' '*.json')
-          fi
+          
           # Check for modified files in the pull request (if it's a PR)
           if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
             pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
