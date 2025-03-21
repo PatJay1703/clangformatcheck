@@ -1,18 +1,7 @@
 name: Clang Tidy Check
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-       -'**/*.c'
-       -'**/*.cc'
-       -'**/*.cpp'
-       -'**/*.cxx'
-       -'**/*.h'
-       -'**/*.hh'
-       -'**/*.hpp'
-       -'**/*.hxx'
+  
 
   pull_request:
     branches:
@@ -45,12 +34,8 @@ jobs:
       - name: Find modified, new, and PR files
         id: find_files
         run: |
-          if git rev-parse HEAD~1 >/dev/null 2>&1; then
-            files=$(git diff --name-only HEAD~1 -- '*.cpp' '*.h')
-          else
-            files=$(git ls-files '*.cpp' '*.h')
-          fi
-          new_files=$(git ls-files --others --exclude-standard '*.cpp' '*.h')
+         
+          
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h')
           else
