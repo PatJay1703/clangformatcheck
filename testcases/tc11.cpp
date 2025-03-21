@@ -2,6 +2,6 @@
 using namespace std;
 
 
-int main(){int a,b; cout<<"hellow world";return 0;
+int main(){int a,b,c; cout<<"hellow world";return 0;
 }
 
