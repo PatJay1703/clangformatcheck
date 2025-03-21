@@ -41,7 +41,6 @@ jobs:
           else
             pr_files=""
           fi
-
           # Combine all files (modified, new, and PR files)
           all_files=$(echo -e "$files\n$pr_files" | sort -u | tr '\n' ' ')
           
