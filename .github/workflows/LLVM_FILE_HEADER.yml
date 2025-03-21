@@ -37,6 +37,7 @@ jobs:
         run: |
           # Get the list of files changed in the pull request
           pr_files=$(git diff --name-only origin/main...HEAD -- '*.c' '*.cpp' '*.h' '*.cc' '*.cxx' '*.m')
+          echo "pr_files:$pr_files"
           
           # Check the header in each file
           if [ -n "$pr_files" ]; then
