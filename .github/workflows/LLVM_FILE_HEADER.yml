@@ -17,7 +17,6 @@ on:
       - '**/*.proto'
       - '**/*.cs'
 
-
 jobs:
   header-check:
     runs-on: ubuntu-latest
@@ -25,23 +24,58 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Ensures full history is fetched
+          fetch-depth: 0
 
       - name: Set up bash script
         run: |
-          echo '#!/bin/bash' > check_header.sh
-          echo "$(cat check_header.sh)" >> check_header.sh
-          chmod +x check_header.sh
-
-      - name: Check LLVM file headers
-        run: |
-          # Get the list of files changed in the pull request
-          pr_files=$(git diff --name-only origin/main...HEAD -- '*.c' '*.cpp' '*.h' '*.cc' '*.cxx' '*.m')
-          echo "pr_files:$pr_files"
+          echo '#!/bin/bash' > header_check.sh
+          echo '
+          # Define the expected header pattern
+          EXPECTED_HEADER="^//===----------------------------------------------------------------------===//"
+          EXPECTED_LICENSE="^// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions."
+          EXPECTED_SPDX="^// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception"
+          EXPECTED_DOXYGEN="^/// \file"
           
-          # Check the header in each file
+          # Function to check the header for each file
+          check_header() {
+            local file=$1
+            echo "Checking file: $file"
+            
+            if ! head -n 20 "$file" | grep -q -E "$EXPECTED_HEADER"; then
+              echo "Error: Missing or incorrect header in $file."
+              exit 1
+            fi
+            
+            if ! head -n 20 "$file" | grep -q -E "$EXPECTED_LICENSE"; then
+              echo "Error: Missing or incorrect license section in $file."
+              exit 1
+            fi
+
+            if ! head -n 20 "$file" | grep -q -E "$EXPECTED_SPDX"; then
+              echo "Error: Missing or incorrect SPDX section in $file."
+              exit 1
+            fi
+
+            if ! head -n 20 "$file" | grep -q -E "$EXPECTED_DOXYGEN"; then
+              echo "Error: Missing or incorrect doxygen comment section in $file."
+              exit 1
+            fi
+
+            echo "Header is correct in $file"
+          }
+
+          for file in "$@"; do
+            header_check "$file"
+          done
+          ' >> check_header.sh
+          chmod +x header_check.sh
+
+      - name: Debug - Check files to be checked
+        run: |
+          pr_files=$(git diff --name-only origin/main...HEAD -- '*.c' '*.cpp' '*.h' '*.cc' '*.cxx' '*.m')
+          echo "Files to check: $pr_files"
           if [ -n "$pr_files" ]; then
-            ./check_header.sh $pr_files
+            ./header_check.sh $pr_files
           else
             echo "No relevant files to check."
           fi
