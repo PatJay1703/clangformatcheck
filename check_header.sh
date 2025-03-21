@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Define the expected header pattern (using a simple regex for demonstration)
+# Define the expected header pattern
 EXPECTED_HEADER="^//===----------------------------------------------------------------------===//"
 EXPECTED_LICENSE="^// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions."
 EXPECTED_SPDX="^// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception"
+EXPECTED_DOXYGEN="^/// \file"
 
 # Function to check the header for each file
 check_header() {
@@ -23,6 +24,11 @@ check_header() {
 
   if ! head -n 20 "$file" | grep -q -E "$EXPECTED_SPDX"; then
     echo "Error: Missing or incorrect SPDX section in $file."
+    exit 1
+  fi
+
+  if ! head -n 20 "$file" | grep -q -E "$EXPECTED_DOXYGEN"; then
+    echo "Error: Missing or incorrect doxygen comment section in $file."
     exit 1
   fi
 
