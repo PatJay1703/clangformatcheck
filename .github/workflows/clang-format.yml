@@ -1,13 +1,10 @@
 name: Clang Format Check
 
 on:
-  
-    
   pull_request:
     branches:
       - main
     paths:
-      - '**/*.c'
       - '**/*.cpp'
       - '**/*.cc'
       - '**/*.cxx'
@@ -22,47 +19,37 @@ on:
 jobs:
   clang-format:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Ensures the full history is fetched
+          fetch-depth: 0
 
-      - name: Fetch latest changes from remote
-        run: git fetch origin
-
-      - name: Install clang-format
-        run: sudo apt-get install -y clang-format
-
-      - name: Find modified, new, and PR files
-        id: find_files
+      - name: Install clang-format and dependencies
         run: |
-         
+          sudo apt-get update
+          sudo apt-get install -y clang-format python3
 
-          # Check for modified files in the pull request (if it's a PR)
-          if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
-            pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
-                    '*.proto' '*.cs' '*.m' '*.java' '*.js' '*.json')
-          else
-            pr_files=""
-          fi
-
-          # Combine all files (modified, new, and PR files)
-          all_files=$(echo -e "$files\n$pr_files" | sort -u | tr '\n' ' ')
+      - name: Get changed lines and run clang-format
+        run: |
+          git fetch origin main
           
-          echo "FILES=$all_files" >> $GITHUB_ENV
-          echo "Checking files: $all_files"
+          # Get the diff between main and the PR branch
+          git diff origin/main...HEAD > changes.diff
 
-      - name: Run clang-format and show differences
-        run: |
-          if [ -n "$FILES" ]; then
-            # Run clang-format on the files
-            clang-format -i $FILES
-            if ! git diff --quiet; then
-              echo "Code not formatted correctly. Showing diff:"
-              git diff --color
-              exit 1
-            fi
+          # Run clang-format-diff.py on the diff
+          curl -sSL https://raw.githubusercontent.com/llvm/llvm-project/main/clang/tools/clang-format/clang-format-diff.py -o clang-format-diff.py
+          chmod +x clang-format-diff.py
+
+          FORMAT_OUTPUT=$(python3 clang-format-diff.py -p1 -style=file < changes.diff)
+
+          if [ -n "$FORMAT_OUTPUT" ]; then
+            echo "Clang-format found formatting issues:"
+            echo "$FORMAT_OUTPUT"
+            echo "$FORMAT_OUTPUT" > format.patch
+            cat format.patch
+            exit 1
           else
-            echo "No relevant files to check."
-          fi 
+            echo "No formatting issues found."
+          fi
