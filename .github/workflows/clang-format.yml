@@ -32,7 +32,7 @@ jobs:
       - name: Install clang-format
         run: sudo apt-get install -y clang-format
 
-      - name: Find modified files and specific lines
+      - name: Find modified files and changed lines
         id: find_files
         run: |
           # Fetch the list of files modified in the pull request
@@ -43,29 +43,43 @@ jobs:
             pr_files=""
           fi
 
-          # Loop over the modified files and extract the modified lines for each file
-          changed_lines=""
+          # Create a variable to store the list of changed lines
+          changed_files=""
+
           for file in $pr_files; do
-            lines=$(git diff -U0 origin/main...HEAD -- "$file" | grep '^\+' | grep -v '^\+\+\+' | cut -c2-)
-            if [ -n "$lines" ]; then
-              changed_lines="$changed_lines $file"
+            # Get modified lines for each file
+            modified_lines=$(git diff -U0 origin/main...HEAD -- "$file" | grep '^\+' | grep -v '^\+\+\+' | cut -c2-)
+            if [ -n "$modified_lines" ]; then
+              changed_files="$changed_files $file"
             fi
           done
 
-          # Set the environment variable with the modified files and changed lines
-          echo "FILES=$changed_lines" >> $GITHUB_ENV
-          echo "Checking files: $changed_lines"
+          echo "FILES=$changed_files" >> $GITHUB_ENV
+          echo "Checking files: $changed_files"
 
-      - name: Run clang-format on changed lines
+      - name: Apply clang-format to changed lines
         run: |
           if [ -n "$FILES" ]; then
-            # Run clang-format only on changed lines
-            clang-format -i $FILES
-            if ! git diff --quiet; then
-              echo "Code not formatted correctly. Showing diff:"
-              git diff --color
-              exit 1
-            fi
+            for file in $FILES; do
+              # Get the modified lines in the file
+              lines=$(git diff -U0 origin/main...HEAD -- "$file" | grep '^\+' | grep -v '^\+\+\+' | cut -c2-)
+              
+              # Create a temporary file and add the modified lines
+              echo "$lines" > tmp_$file
+
+              # Apply clang-format to the temporary file
+              clang-format -i tmp_$file
+
+              # Check if the diff of the formatted temp file is different from the original
+              if ! diff tmp_$file "$file" > /dev/null; then
+                echo "Code not formatted correctly in $file. Showing diff:"
+                diff tmp_$file "$file"
+                exit 1
+              fi
+
+              # Clean up temporary files
+              rm tmp_$file
+            done
           else
             echo "No relevant files to check."
           fi
