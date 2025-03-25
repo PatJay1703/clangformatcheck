@@ -44,7 +44,7 @@ jobs:
           fi
           # Combine all files (modified, new, and PR files)
           all_files=$(echo -e "$pr_files" | sort -u | tr '\n' ' ')
-          
+
           echo "FILES=$all_files" >> $GITHUB_ENV
           echo "Checking files: $all_files"
 
@@ -69,16 +69,17 @@ jobs:
             for file in $FILES; do
               echo "Running clang-format on $file"
               
-              # Apply clang-format only on modified lines using 'sed' to extract lines
+              # Apply clang-format only on modified lines using 'git diff'
               if [ -f modified_lines.txt ]; then
-                # Apply clang-format to the lines from the modified_lines.txt
                 while IFS= read -r line; do
                   # Extract line numbers from the diff output in modified_lines.txt
                   line_number=$(echo $line | grep -oP '\d+')
                   
+                  # Check if the line number is valid
                   if [ -n "$line_number" ]; then
-                    # Format the specific line(s) using clang-format
-                    clang-format -i -lines=$line_number $file
+                    # Apply clang-format to the modified line(s)
+                    # clang-format expects a range, so we need to pass the same line twice (start:end)
+                    clang-format -i -lines=$line_number:$line_number $file
                   fi
                 done < modified_lines.txt
               fi
