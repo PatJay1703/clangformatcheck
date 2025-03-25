@@ -34,14 +34,18 @@ jobs:
         run: |
           # Identify modified files in the PR
           pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' '*.proto' '*.cs' '*.m' '*.java' '*.js' '*.json')
-          echo "FILES=$pr_files" >> $GITHUB_ENV
           echo "Modified files: $pr_files"
+
+          # Convert to space-separated format and export as environment variable
+          pr_files=$(echo "$pr_files" | tr '\n' ' ')
+          echo "FILES=$pr_files" >> $GITHUB_ENV
+          echo "Exported FILES variable: $pr_files"
 
       - name: Apply clang-format to specific lines
         run: |
           if [ -n "$FILES" ]; then
             for file in $FILES; do
-              echo "Processing: $file"
+              echo "Processing file: $file"
 
               # Extract modified line numbers
               line_numbers=$(git diff -U0 origin/main...HEAD -- $file | grep -oP '^\+\d+' | sed 's/^+//')
@@ -59,4 +63,22 @@ jobs:
             done
           else
             echo "No files to process."
+          fi
+
+      - name: Show formatting differences
+        run: |
+          if [ -n "$FILES" ]; then
+            for file in $FILES; do
+              echo "Checking differences for: $file"
+
+              # Display formatting differences
+              if ! git diff --quiet $file; then
+                echo "Differences after running clang-format on $file:"
+                git diff --color $file
+              else
+                echo "No differences found for: $file"
+              fi
+            done
+          else
+            echo "No files to check."
           fi
