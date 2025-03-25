@@ -70,18 +70,23 @@ jobs:
 
       - name: Apply clang-format to modified lines and show differences
         run: |
-          if [ -n "$FILES" ]; then
+         if [ -n "$FILES" ]; then
             for file in $FILES; do
               echo "Running clang-format on modified lines of $file"
-              
+        
               # Apply clang-format only on the modified lines
               if [ -f modified_lines.txt ]; then
                 while IFS= read -r line_number; do
-                  # Apply clang-format to the modified line using the range format: line_number:line_number
-                  clang-format -i -lines=$line_number:$line_number $file
+                  if [[ "$line_number" =~ ^[0-9]+$ ]]; then  # Ensure it's a valid number
+                    # Apply clang-format to the modified line using the range format: line_number:line_number
+                    echo "Applying clang-format to line $line_number in $file"
+                    clang-format -i -lines=$line_number:$line_number $file
+                  else
+                    echo "Skipping invalid line number: $line_number"
+                  fi
                 done < modified_lines.txt
               fi
-              
+
               # Compare with git diff to check if formatting has been applied correctly
               if ! git diff --quiet; then
                 echo "Code not formatted correctly in $file. Showing diff:"
