@@ -1,6 +1,8 @@
 name: Clang Format Check
 
 on:
+  
+    
   pull_request:
     branches:
       - main
@@ -24,61 +26,43 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Ensures the full history is fetched
+
+      - name: Fetch latest changes from remote
+        run: git fetch origin
 
       - name: Install clang-format
         run: sudo apt-get install -y clang-format
 
-      - name: Find modified files in PR
+      - name: Find modified, new, and PR files
         id: find_files
         run: |
-          # Identify modified files in the PR
-          pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' '*.proto' '*.cs' '*.m' '*.java' '*.js' '*.json')
-          echo "Modified files: $pr_files"
+         
 
-          # Convert to space-separated format and export as environment variable
-          pr_files=$(echo "$pr_files" | tr '\n' ' ')
-          echo "FILES=$pr_files" >> $GITHUB_ENV
-          echo "Exported FILES variable: $pr_files"
-
-      - name: Apply clang-format to specific lines
-        run: |
-          if [ -n "$FILES" ]; then
-            for file in $FILES; do
-              echo "Processing file: $file"
-
-              # Extract modified line numbers
-              line_numbers=$(git diff -U0 origin/main...HEAD -- $file | grep -oP '^\+\d+' | sed 's/^+//')
-              if [ -n "$line_numbers" ]; then
-                echo "Modified lines in $file: $line_numbers"
-
-                # Apply clang-format to each modified line
-                for line in $line_numbers; do
-                  echo "Formatting line $line in $file"
-                  clang-format -i -lines=$line:$line $file
-                done
-              else
-                echo "No modified lines found in $file"
-              fi
-            done
+          # Check for modified files in the pull request (if it's a PR)
+          if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
+            pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
+                    '*.proto' '*.cs' '*.m' '*.java' '*.js' '*.json')
           else
-            echo "No files to process."
+            pr_files=""
           fi
 
-      - name: Show formatting differences
+          # Combine all files (modified, new, and PR files)
+          all_files=$(echo -e "$files\n$pr_files" | sort -u | tr '\n' ' ')
+          
+          echo "FILES=$all_files" >> $GITHUB_ENV
+          echo "Checking files: $all_files"
+
+      - name: Run clang-format and show differences
         run: |
           if [ -n "$FILES" ]; then
-            for file in $FILES; do
-              echo "Checking differences for: $file"
-
-              # Display formatting differences
-              if ! git diff --quiet $file; then
-                echo "Differences after running clang-format on $file:"
-                git diff --color $file
-              else
-                echo "No differences found for: $file"
-              fi
-            done
+            # Run clang-format on the files
+            clang-format -i $FILES
+            if ! git diff --quiet; then
+              echo "Code not formatted correctly. Showing diff:"
+              git diff --color
+              exit 1
+            fi
           else
-            echo "No files to check."
-          fi
+            echo "No relevant files to check."
+          fi 
