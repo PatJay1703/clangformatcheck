@@ -2,4 +2,4 @@
 using namespace std;
 
 
-int main(){cout<<"helloqq"; return 0;}
+int main(){cout<<"hellow"; if(3>4){cout<<"good";} return 0;}
