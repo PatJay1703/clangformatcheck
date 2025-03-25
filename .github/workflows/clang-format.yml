@@ -54,16 +54,21 @@ jobs:
           if [ -n "$FILES" ]; then
             for file in $FILES; do
               echo "Checking file: $file"
+
+              # Create the directory for storing modified lines files if it doesn't exist
+              dir_name="modified_lines_$(dirname $file)"
+              mkdir -p $dir_name
+
               if git diff --cached --name-status | grep -E "^A" | grep -q "$file"; then
                 # If the file is newly added, consider all lines as modified
-                awk '{print "+" NR}' $file > modified_lines_$file.txt
+                awk '{print "+" NR}' $file > "$dir_name/$(basename $file).txt"
               else
                 # Get modified lines for existing files
                 git diff --unified=0 origin/main...HEAD -- $file | \
-                grep -E "^\+" > modified_lines_$file.txt
+                grep -E "^\+" > "$dir_name/$(basename $file).txt"
               fi
-              echo "Modified lines saved in modified_lines_$file.txt"
-              cat modified_lines_$file.txt
+              echo "Modified lines saved in $dir_name/$(basename $file).txt"
+              cat "$dir_name/$(basename $file).txt"
             done
           else
             echo "No relevant files to check."
@@ -76,7 +81,9 @@ jobs:
               echo "Running clang-format on $file"
 
               # Apply clang-format to modified lines
-              if [ -f modified_lines_$file.txt ]; then
+              dir_name="modified_lines_$(dirname $file)"
+              modified_lines_file="$dir_name/$(basename $file).txt"
+              if [ -f "$modified_lines_file" ]; then
                 while IFS= read -r line; do
                   # Extract line numbers from the diff output
                   line_number=$(echo $line | grep -oP '\d+')
@@ -87,7 +94,7 @@ jobs:
                     # clang-format expects a range, so we pass the same line for start:end
                     clang-format -i -lines=$line_number:$line_number $file
                   fi
-                done < modified_lines_$file.txt
+                done < "$modified_lines_file"
               fi
 
               # Show differences between clang-formatted code and the original
