@@ -1,3 +1,4 @@
+
 name: Clang Format Check
 
 on:
@@ -47,7 +48,6 @@ jobs:
           
           echo "FILES=$all_files" >> $GITHUB_ENV
           echo "Checking files: $all_files"
-
       - name: Identify modified lines
         id: modified_lines
         run: |
@@ -59,10 +59,10 @@ jobs:
                 grep -E "^\+|^\-" > modified_lines.txt
             done
             echo "Modified lines saved in modified_lines.txt"
+            cat modified_lines.txt
           else
             echo "No relevant files to check."
           fi
-
       - name: Apply clang-format to modified lines and show differences
         run: |
           if [ -n "$FILES" ]; then
@@ -82,7 +82,6 @@ jobs:
                   fi
                 done < modified_lines.txt
               fi
-
               # Compare with git diff to check if formatting has been applied correctly
               if ! git diff --quiet; then
                 echo "Code not formatted correctly in $file. Showing diff:"
