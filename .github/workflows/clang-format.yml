@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - '**/*.c'
       - '**/*.cpp'
       - '**/*.cc'
       - '**/*.cxx'
@@ -19,37 +20,52 @@ on:
 jobs:
   clang-format:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Ensures the full history is fetched
 
-      - name: Install clang-format and dependencies
+      - name: Fetch latest changes from remote
+        run: git fetch origin
+
+      - name: Install clang-format
+        run: sudo apt-get install -y clang-format
+
+      - name: Find modified files and specific lines
+        id: find_files
         run: |
-          sudo apt-get update
-          sudo apt-get install -y clang-format python3
-
-      - name: Get changed lines and run clang-format
-        run: |
-          git fetch origin main
-          
-          # Get the diff between main and the PR branch
-          git diff origin/main...HEAD > changes.diff
-
-          # Run clang-format-diff.py on the diff
-          curl -sSL https://raw.githubusercontent.com/llvm/llvm-project/main/clang/tools/clang-format/clang-format-diff.py -o clang-format-diff.py
-          chmod +x clang-format-diff.py
-
-          FORMAT_OUTPUT=$(python3 clang-format-diff.py -p1 -style=file < changes.diff)
-
-          if [ -n "$FORMAT_OUTPUT" ]; then
-            echo "Clang-format found formatting issues:"
-            echo "$FORMAT_OUTPUT"
-            echo "$FORMAT_OUTPUT" > format.patch
-            cat format.patch
-            exit 1
+          # Fetch the list of files modified in the pull request
+          if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
+            pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
+                    '*.proto' '*.cs' '*.m' '*.java' '*.js' '*.json')
           else
-            echo "No formatting issues found."
+            pr_files=""
+          fi
+
+          # Loop over the modified files and extract the modified lines for each file
+          changed_lines=""
+          for file in $pr_files; do
+            lines=$(git diff -U0 origin/main...HEAD -- "$file" | grep '^\+' | grep -v '^\+\+\+' | cut -c2-)
+            if [ -n "$lines" ]; then
+              changed_lines="$changed_lines $file"
+            fi
+          done
+
+          # Set the environment variable with the modified files and changed lines
+          echo "FILES=$changed_lines" >> $GITHUB_ENV
+          echo "Checking files: $changed_lines"
+
+      - name: Run clang-format on changed lines
+        run: |
+          if [ -n "$FILES" ]; then
+            # Run clang-format only on changed lines
+            clang-format -i $FILES
+            if ! git diff --quiet; then
+              echo "Code not formatted correctly. Showing diff:"
+              git diff --color
+              exit 1
+            fi
+          else
+            echo "No relevant files to check."
           fi
