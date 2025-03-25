@@ -60,7 +60,7 @@ jobs:
               # Extract line numbers from the git diff output and store in modified_lines.txt
               git diff --unified=0 origin/main...HEAD -- $file | \
                 grep -E "^\+|^\-" | \
-                sed -n 's/^\([0-9]*\).*$/\1/p' >> modified_lines.txt
+                sed -n 's/^\([0-9]*\).*$/\1/p' | sort -n | uniq >> modified_lines.txt
             done
             echo "Modified line numbers saved in modified_lines.txt"
             cat modified_lines.txt
@@ -70,7 +70,7 @@ jobs:
 
       - name: Apply clang-format to modified lines and show differences
         run: |
-         if [ -n "$FILES" ]; then
+          if [ -n "$FILES" ]; then
             for file in $FILES; do
               echo "Running clang-format on modified lines of $file"
         
