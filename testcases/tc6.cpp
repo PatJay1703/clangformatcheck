@@ -1,5 +1,8 @@
 #include<iostream>
 using namespace std;
 
+int main(){
 
-int main(){cout<<"helloqq"; if(x>y){cout<<"hello";} return 0;}
+cout<<"hello";
+
+}

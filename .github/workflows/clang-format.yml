@@ -38,55 +38,49 @@ jobs:
           # Check for modified files in the pull request (if it's a PR)
           if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
             pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
-                      '*.proto' '*.cs' '*.m' '*.java' '*.js' '*.json')
+                    '*.proto' '*.cs' '*.m' '*.java' '*.js' '*.json')
           else
             pr_files=""
           fi
           # Combine all files (modified, new, and PR files)
           all_files=$(echo -e "$pr_files" | sort -u | tr '\n' ' ')
-
           echo "FILES=$all_files" >> $GITHUB_ENV
           echo "Checking files: $all_files"
-
       - name: Identify modified lines
         id: modified_lines
         run: |
+          # Identify modified lines
           if [ -n "$FILES" ]; then
-            # Create an empty file to store modified line numbers
-            > modified_lines.txt
             for file in $FILES; do
               echo "Checking file: $file"
-
-              # Extract line numbers from the git diff output and store in modified_lines.txt
               git diff --unified=0 origin/main...HEAD -- $file | \
-                grep -E "^\+|^\-" | \
-                sed -n 's/^\([0-9]*\).*$/\1/p' | sort -n | uniq >> modified_lines.txt
+                grep -E "^\+|^\-" > modified_lines.txt
             done
-            echo "Modified line numbers saved in modified_lines.txt"
+            echo "Modified lines saved in modified_lines.txt"
             cat modified_lines.txt
           else
             echo "No relevant files to check."
           fi
-
       - name: Apply clang-format to modified lines and show differences
         run: |
           if [ -n "$FILES" ]; then
             for file in $FILES; do
-              echo "Running clang-format on modified lines of $file"
-        
-              # Apply clang-format only on the modified lines
+              echo "Running clang-format on $file"
+              
+              # Apply clang-format only on modified lines using 'git diff'
               if [ -f modified_lines.txt ]; then
-                while IFS= read -r line_number; do
-                  if [[ "$line_number" =~ ^[0-9]+$ ]]; then  # Ensure it's a valid number
-                    # Apply clang-format to the modified line using the range format: line_number:line_number
-                    echo "Applying clang-format to line $line_number in $file"
+                while IFS= read -r line; do
+                  # Extract line numbers from the diff output in modified_lines.txt
+                  line_number=$(echo $line | grep -oP '\d+')
+                  
+                  # Check if the line number is valid
+                  if [ -n "$line_number" ]; then
+                    # Apply clang-format to the modified line(s)
+                    # clang-format expects a range, so we need to pass the same line twice (start:end)
                     clang-format -i -lines=$line_number:$line_number $file
-                  else
-                    echo "Skipping invalid line number: $line_number"
                   fi
                 done < modified_lines.txt
               fi
-
               # Compare with git diff to check if formatting has been applied correctly
               if ! git diff --quiet; then
                 echo "Code not formatted correctly in $file. Showing diff:"
