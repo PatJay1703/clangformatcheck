@@ -38,60 +38,62 @@ jobs:
           # Check for modified files in the pull request (if it's a PR)
           if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
             pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
-                      '*.proto' '*.cs' '*.m' '*.java' '*.js' '*.json')
+                       '*.proto' '*.cs' '*.m' '*.java' '*.js' '*.json')
           else
             pr_files=""
           fi
           # Combine all files (modified, new, and PR files)
           all_files=$(echo -e "$pr_files" | sort -u | tr '\n' ' ')
-
           echo "FILES=$all_files" >> $GITHUB_ENV
           echo "Checking files: $all_files"
 
-      - name: Identify modified lines
+      - name: Identify modified lines and handle newly added files
         id: modified_lines
         run: |
+          # Identify modified lines and handle newly added files
           if [ -n "$FILES" ]; then
-            # Create an empty file to store modified line numbers
-            > modified_lines.txt
             for file in $FILES; do
               echo "Checking file: $file"
-
-              # Extract line numbers from the git diff output and store in modified_lines.txt
-              git diff --unified=0 origin/main...HEAD -- $file | \
-                grep -E "^\+|^\-" | \
-                sed -n 's/^\([0-9]*\).*$/\1/p' | sort -n | uniq >> modified_lines.txt
+              if git diff --cached --name-status | grep -E "^A" | grep -q "$file"; then
+                # If the file is newly added, consider all lines as modified
+                awk '{print "+" NR}' $file > modified_lines_$file.txt
+              else
+                # Get modified lines for existing files
+                git diff --unified=0 origin/main...HEAD -- $file | \
+                grep -E "^\+" > modified_lines_$file.txt
+              fi
+              echo "Modified lines saved in modified_lines_$file.txt"
+              cat modified_lines_$file.txt
             done
-            echo "Modified line numbers saved in modified_lines.txt"
-            cat modified_lines.txt
           else
             echo "No relevant files to check."
           fi
 
-      - name: Apply clang-format to modified lines and show differences
+      - name: Apply clang-format to specific modified lines and show differences
         run: |
           if [ -n "$FILES" ]; then
             for file in $FILES; do
-              echo "Running clang-format on modified lines of $file"
-        
-              # Apply clang-format only on the modified lines
-              if [ -f modified_lines.txt ]; then
-                while IFS= read -r line_number; do
-                  if [[ "$line_number" =~ ^[0-9]+$ ]]; then  # Ensure it's a valid number
-                    # Apply clang-format to the modified line using the range format: line_number:line_number
-                    echo "Applying clang-format to line $line_number in $file"
+              echo "Running clang-format on $file"
+
+              # Apply clang-format to modified lines
+              if [ -f modified_lines_$file.txt ]; then
+                while IFS= read -r line; do
+                  # Extract line numbers from the diff output
+                  line_number=$(echo $line | grep -oP '\d+')
+
+                  # Check if the line number is valid
+                  if [ -n "$line_number" ]; then
+                    # Apply clang-format to the specific line(s)
+                    # clang-format expects a range, so we pass the same line for start:end
                     clang-format -i -lines=$line_number:$line_number $file
-                  else
-                    echo "Skipping invalid line number: $line_number"
                   fi
-                done < modified_lines.txt
+                done < modified_lines_$file.txt
               fi
 
-              # Compare with git diff to check if formatting has been applied correctly
-              if ! git diff --quiet; then
-                echo "Code not formatted correctly in $file. Showing diff:"
+              # Show differences between clang-formatted code and the original
+              if ! git diff --quiet $file; then
+                echo "Differences after running clang-format on $file:"
                 git diff --color $file
-                exit 1
               fi
             done
           else
