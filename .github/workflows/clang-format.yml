@@ -42,7 +42,6 @@ jobs:
           else
             pr_files=""
           fi
-
           # Combine all files (modified, new, and PR files)
           all_files=$(echo -e "$pr_files" | sort -u | tr '\n' ' ')
           
@@ -64,13 +63,25 @@ jobs:
             echo "No relevant files to check."
           fi
 
-      - name: Run clang-format and show differences
+      - name: Apply clang-format to modified lines and show differences
         run: |
           if [ -n "$FILES" ]; then
-            # Run clang-format only on modified files and lines
             for file in $FILES; do
               echo "Running clang-format on $file"
-              clang-format -i $file
+              
+              # Apply clang-format only on modified lines using 'sed' to extract lines
+              if [ -f modified_lines.txt ]; then
+                # Apply clang-format to the lines from the modified_lines.txt
+                while IFS= read -r line; do
+                  # Extract line numbers from the diff output in modified_lines.txt
+                  line_number=$(echo $line | grep -oP '\d+')
+                  
+                  if [ -n "$line_number" ]; then
+                    # Format the specific line(s) using clang-format
+                    clang-format -i -lines=$line_number $file
+                  fi
+                done < modified_lines.txt
+              fi
 
               # Compare with git diff to check if formatting has been applied correctly
               if ! git diff --quiet; then
