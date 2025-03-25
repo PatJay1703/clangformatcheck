@@ -57,7 +57,7 @@ jobs:
         run: |
           if [ -n "$FILES" ]; then
             # Run clang-format on the files
-            clang-format -i $FILES
+            git-clang-format -i $FILES
             if ! git diff --quiet; then
               echo "Code not formatted correctly. Showing diff:"
               git diff --color
