@@ -2,7 +2,7 @@
 
 void foo(int x, int y)
 {
-    if(x>y){std::cout<<"x is greater than y"<<std::endl;}else{std::cout<<"y is greater than x"<<std::endl;} 
+    if(x>y){std::cout<<"x is greaterer than y"<<std::endl;}else{std::cout<<"y is greater than x"<<std::endl;} 
 }
 
 
