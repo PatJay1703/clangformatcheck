@@ -10,7 +10,7 @@ private:
     int age;
 public:
     Person(string n, int a): name(n), age(a){};
-    void display() { cout << "Namee: " << name << ", Age: " << age << endl; }
+    void display() { cout << "Namee: " << name << ", Ageeeeeee: " << age << endl; }
 };
 
 void sortNames(vector<Person> &people){
