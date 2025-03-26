@@ -24,14 +24,21 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Ensures the full history is fetched for PR diff
 
       - name: Install clang-format
         run: sudo apt-get install -y clang-format
 
-      - name: Check clang-format on PR changes
+      - name: Fetch base branch and check for clang-format
         run: |
-          git fetch origin main
+          # Fetch the base branch for comparison
+          git fetch origin main:main
+
+          # Check if the git fetch was successful
+          if [ $? -ne 0 ]; then
+            echo "Failed to fetch the 'main' branch from origin."
+            exit 1
+          fi
 
           # Run git-clang-format to check diffs from the PR base
           output=$(git-clang-format origin/main --diff)
