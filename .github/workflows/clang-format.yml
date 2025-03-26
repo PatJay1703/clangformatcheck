@@ -32,7 +32,18 @@ jobs:
       run: |
         # Fetch the main branch to compare changes
         git fetch origin main
-        modified_files=$(git diff --name-only --diff-filter=ACMRT origin/main...HEAD)
+        
+        # Find the common ancestor commit
+        BASE_COMMIT=$(git merge-base origin/main HEAD)
+        
+        # Check if we were able to get a merge base
+        if [ -z "$BASE_COMMIT" ]; then
+          echo "No common base commit found. Exiting."
+          exit 1
+        fi
+
+        # Get the modified or new files since the common ancestor commit
+        modified_files=$(git diff --name-only --diff-filter=ACMRT $BASE_COMMIT...HEAD)
         
         if [ -z "$modified_files" ]; then
           echo "No files modified or added"
@@ -47,7 +58,7 @@ jobs:
             # For new files, use clang-format on the whole file
             if git ls-files --error-unmatch "$file" > /dev/null 2>&1; then
               # File exists in the repo (modified file)
-              modified_lines=$(git diff --unified=0 origin/main...HEAD -- $file | grep -E '^\+[^+]' | cut -c2-)
+              modified_lines=$(git diff --unified=0 $BASE_COMMIT...HEAD -- $file | grep -E '^\+[^+]' | cut -c2-)
               if [ -n "$modified_lines" ]; then
                 echo "$modified_lines" | clang-format --dry-run --Werror
                 if [ $? -ne 0 ]; then
