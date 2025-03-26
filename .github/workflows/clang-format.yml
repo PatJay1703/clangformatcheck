@@ -53,7 +53,7 @@ jobs:
         run: |
           if [ -n "$FILES" ]; then
             git-clang-format --diff $FILES
-            if ! git-clang-format --diff --files $FILES | grep -q "no modified files to format"; then
+            if ! git-clang-format --diff  $FILES | grep -q "no modified files to format"; then
               echo "Code not formatted correctly. Please run clang-format."
               exit 1
             fi
