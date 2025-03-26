@@ -41,8 +41,10 @@ jobs:
           echo "$output"
           if ! echo "$output" | grep -q "no modified files to format"; then
             echo "Code formatting issues detected."
-            echo "Please run the following command locally to fix them:"
+            echo "Run the following command locally to fix them:"
             echo "  git-clang-format origin/main"
+            echo "After applying the changes, commit and push them to your branch."
             exit 1
           fi
+
 
