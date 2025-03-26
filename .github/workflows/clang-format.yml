@@ -28,23 +28,25 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y clang-format
 
+    - name: Fetch latest changes from the remote
+      run: |
+        git fetch origin main
+
     - name: Check Clang Format on Modified and New Files
       run: |
-        # Fetch the main branch to compare changes
-        git fetch origin main
-        
         # Find the common ancestor commit
         BASE_COMMIT=$(git merge-base origin/main HEAD)
-        
-        # Check if we were able to get a merge base
+
         if [ -z "$BASE_COMMIT" ]; then
-          echo "No common base commit found. Exiting."
-          exit 1
+          echo "No common base commit found. This might be a brand new branch with no common history with main."
+          # If there is no common history (new branch), check all files
+          echo "Checking all files since there is no merge base."
+          modified_files=$(git ls-files)
+        else
+          # Get the modified or new files since the common ancestor commit
+          modified_files=$(git diff --name-only --diff-filter=ACMRT $BASE_COMMIT...HEAD)
         fi
 
-        # Get the modified or new files since the common ancestor commit
-        modified_files=$(git diff --name-only --diff-filter=ACMRT $BASE_COMMIT...HEAD)
-        
         if [ -z "$modified_files" ]; then
           echo "No files modified or added"
           exit 0
