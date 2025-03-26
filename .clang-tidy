@@ -1,5 +1,5 @@
 ---
-Checks:          '*, -clang-analyzer-alpha.*, -clang-analyzer-deadcode.*, readability-*, modernize-*, cppcoreguidelines-*'
+Checks:          '*, -clang-analyzer-alpha.*, -clang-analyzer-deadcode.*, readability-*, modernize-*, cppcoreguidelines-*, llvm-else-after-return'
 WarningsAsErrors: '*'
 CheckOptions:
   - key:             readability-braces-around-statements.ShortStatements
