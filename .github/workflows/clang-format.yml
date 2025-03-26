@@ -39,6 +39,9 @@ jobs:
 
           # Run git-clang-format and store the output
           output=$(git-clang-format origin/main --diff)
+
+          # Add debugging info
+          echo "Debugging: output variable contents"
           echo "$output"
 
           if ! echo "$output" | grep -q "no modified files to format"; then
@@ -47,8 +50,5 @@ jobs:
             echo "To resolve these issues, run the following command locally:"
             echo "  git-clang-format origin/main"
             echo "After fixing the formatting, commit and push the changes."
-            exit 1  # Fail the workflow to enforce formatting
+            exit 1
           fi
-
-
-
