@@ -28,30 +28,38 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y clang-format
 
-    - name: Check Clang Format on Modified Lines
+    - name: Check Clang Format on Modified and New Files
       run: |
         # Fetch the main branch to compare changes
         git fetch origin main
-        modified_files=$(git diff --name-only origin/main...HEAD)
+        modified_files=$(git diff --name-only --diff-filter=ACMRT origin/main...HEAD)
         
         if [ -z "$modified_files" ]; then
-          echo "No files modified"
+          echo "No files modified or added"
           exit 0
         fi
 
-        # Run clang-format check on modified lines in each file
+        # Run clang-format check on modified or new files
         for file in $modified_files; do
           if [[ $file == *.cpp || $file == *.c || $file == *.cc || $file == *.cxx || $file == *.java || $file == *.js || $file == *.json || $file == *.m || $file == *.h || $file == *.proto || $file == *.cs ]]; then
-            echo "Checking clang-format for modified lines in $file"
+            echo "Checking clang-format for modified or new file: $file"
 
-            # Get the list of modified lines using git diff
-            modified_lines=$(git diff --unified=0 origin/main...HEAD -- $file | grep -E '^\+[^+]' | cut -c2-)
-
-            if [ -n "$modified_lines" ]; then
-              # Apply clang-format only on the modified lines
-              echo "$modified_lines" | clang-format --dry-run --Werror
+            # For new files, use clang-format on the whole file
+            if git ls-files --error-unmatch "$file" > /dev/null 2>&1; then
+              # File exists in the repo (modified file)
+              modified_lines=$(git diff --unified=0 origin/main...HEAD -- $file | grep -E '^\+[^+]' | cut -c2-)
+              if [ -n "$modified_lines" ]; then
+                echo "$modified_lines" | clang-format --dry-run --Werror
+                if [ $? -ne 0 ]; then
+                  echo "Clang-format check failed for modified lines in $file. Please format the file using clang-format."
+                  exit 1
+                fi
+              fi
+            else
+              # New file, format the entire file
+              clang-format --dry-run --Werror "$file"
               if [ $? -ne 0 ]; then
-                echo "Clang-format check failed for $file. Please format the file using clang-format."
+                echo "Clang-format check failed for new file $file. Please format the file using clang-format."
                 exit 1
               fi
             fi
