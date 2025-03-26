@@ -31,24 +31,19 @@ jobs:
 
       - name: Fetch base branch and check for clang-format
         run: |
-          git fetch origin main:main
-          if [ $? -ne 0 ]; then
-            echo "Failed to fetch the 'main' branch from origin."
-            exit 1
-          fi
+          # Fetch the base branch
+          git fetch origin main
 
-          # Run git-clang-format and store the output
+          # Run git-clang-format to generate the diff and store it in a variable
           output=$(git-clang-format origin/main --diff)
 
-          # Add debugging info
-          echo "Debugging: output variable contents"
-          echo "$output"
-
+          # Check if there are formatting issues
           if ! echo "$output" | grep -q "no modified files to format"; then
-            echo "Formatting issues detected. Below are the required changes:"
-            echo "$output"  # Print the diff for contributors
-            echo "To resolve these issues, run the following command locally:"
+            echo "Code not formatted correctly. Below is the diff showing required changes:"
+            echo "$output"  # Print the diff for users to see the correct format
+            echo "To fix, run the following command locally:"
             echo "  git-clang-format origin/main"
-            echo "After fixing the formatting, commit and push the changes."
+            echo "After fixing formatting, commit and push the changes."
             exit 1
-          fi
+          else
+            echo "All code is formatted correctly!"
