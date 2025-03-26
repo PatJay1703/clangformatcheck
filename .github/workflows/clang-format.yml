@@ -2,8 +2,6 @@ name: Clang Format Check
 
 on:
   pull_request:
-    branches:
-      - main
     paths:
       - '**/*.c'
       - '**/*.cpp'
@@ -20,30 +18,42 @@ on:
 jobs:
   clang-format:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Ensures the full history is fetched for PR diff
+    - name: Checkout Code
+      uses: actions/checkout@v2
 
-      - name: Install clang-format
-        run: sudo apt-get install -y clang-format
+    - name: Set up clang-format
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format
 
-      - name: Fetch base branch and check for clang-format
-        run: |
-          # Fetch the base branch
-          git fetch origin main
+    - name: Check Clang Format on Modified Lines
+      run: |
+        # Fetch the main branch to compare changes
+        git fetch origin main
+        modified_files=$(git diff --name-only origin/main...HEAD)
+        
+        if [ -z "$modified_files" ]; then
+          echo "No files modified"
+          exit 0
+        fi
 
-          # Run git-clang-format to generate the diff and store it in a variable
-          output=$(git-clang-format origin/main --diff)
+        # Run clang-format check on modified lines in each file
+        for file in $modified_files; do
+          if [[ $file == *.cpp || $file == *.c || $file == *.cc || $file == *.cxx || $file == *.java || $file == *.js || $file == *.json || $file == *.m || $file == *.h || $file == *.proto || $file == *.cs ]]; then
+            echo "Checking clang-format for modified lines in $file"
 
-          # Check if there are formatting issues
-          if ! echo "$output" | grep -q "no modified files to format"; then
-            echo "Code not formatted correctly. Below is the diff showing required changes:"
-            echo "$output"  # Print the diff for users to see the correct format
-            echo "To fix, run the following command locally:"
-            echo "  git-clang-format origin/main"
-            echo "After fixing formatting, commit and push the changes."
-            exit 1
-          else
-            echo "All code is formatted correctly!"
+            # Get the list of modified lines using git diff
+            modified_lines=$(git diff --unified=0 origin/main...HEAD -- $file | grep -E '^\+[^+]' | cut -c2-)
+
+            if [ -n "$modified_lines" ]; then
+              # Apply clang-format only on the modified lines
+              echo "$modified_lines" | clang-format --dry-run --Werror
+              if [ $? -ne 0 ]; then
+                echo "Clang-format check failed for $file. Please format the file using clang-format."
+                exit 1
+              fi
+            fi
+          fi
+        done
