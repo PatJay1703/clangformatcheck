@@ -39,8 +39,6 @@ jobs:
           echo "FILES=$all_files" >> $GITHUB_ENV
           echo "Checking files: $all_files"
 
-     
-
       - name: Run cppcheck (static analysis)
         run: |
           if [ -n "$FILES" ]; then
@@ -50,8 +48,6 @@ jobs:
             echo "No relevant files to check with cppcheck."
           fi
 
-      
-
       - name: Check for Missing Class Documentation
         run: |
           if [ -n "$FILES" ]; then
@@ -60,17 +56,20 @@ jobs:
             missing_docs=()
             for file in $FILES; do
               if [[ $file == *.cpp || $file == *.h ]]; then
-                # Find classes that are missing the documentation
-                grep -n 'class ' "$file" | while read -r line; do
-                  class_line=$(echo $line | cut -d: -f1)
+                # Find all classes in the file
+                classes=$(grep -n 'class ' "$file")
+                while IFS= read -r class; do
+                  class_line=$(echo $class | cut -d: -f1)
+
+                  # Get the previous line and check if it is a Doxygen comment
                   prev_line=$(($class_line - 1))
                   prev_line_content=$(sed -n "${prev_line}p" "$file")
 
-                  # Check if the previous line is a Doxygen comment (starts with ///)
-                  if [[ ! "$prev_line_content" =~ ^/// ]]; then
+                  # Check if the previous line is not a Doxygen comment (missing doc)
+                  if [[ ! "$prev_line_content" =~ ^\s*\/\*\* ]]; then
                     missing_docs+=("$file:$class_line")
                   fi
-                done
+                done <<< "$classes"
               fi
             done
             
