@@ -2,6 +2,8 @@ name: Clang Format Check
 
 on:
   pull_request:
+    branches:
+      - main
     paths:
       - '**/*.c'
       - '**/*.cpp'
@@ -18,63 +20,43 @@ on:
 jobs:
   clang-format:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v2
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensures the full history is fetched
 
-    - name: Set up clang-format
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y clang-format
+      - name: Fetch latest changes from remote
+        run: git fetch origin
 
-    - name: Fetch latest changes from the remote
-      run: |
-        git fetch origin main
+      - name: Install clang-format
+        run: sudo apt-get install -y clang-format
 
-    - name: Check Clang Format on Modified and New Files
-      run: |
-        # Find the common ancestor commit
-        BASE_COMMIT=$(git merge-base origin/main HEAD)
-
-        if [ -z "$BASE_COMMIT" ]; then
-          echo "No common base commit found. This might be a brand new branch with no common history with main."
-          # If there is no common history (new branch), check all files
-          echo "Checking all files since there is no merge base."
-          modified_files=$(git ls-files)
-        else
-          # Get the modified or new files since the common ancestor commit
-          modified_files=$(git diff --name-only --diff-filter=ACMRT $BASE_COMMIT...HEAD)
-        fi
-
-        if [ -z "$modified_files" ]; then
-          echo "No files modified or added"
-          exit 0
-        fi
-
-        # Run clang-format check on modified or new files
-        for file in $modified_files; do
-          if [[ $file == *.cpp || $file == *.c || $file == *.cc || $file == *.cxx || $file == *.java || $file == *.js || $file == *.json || $file == *.m || $file == *.h || $file == *.proto || $file == *.cs ]]; then
-            echo "Checking clang-format for modified or new file: $file"
-
-            # For new files, use clang-format on the whole file
-            if git ls-files --error-unmatch "$file" > /dev/null 2>&1; then
-              # File exists in the repo (modified file)
-              modified_lines=$(git diff --unified=0 $BASE_COMMIT...HEAD -- $file | grep -E '^\+[^+]' | cut -c2-)
-              if [ -n "$modified_lines" ]; then
-                echo "$modified_lines" | clang-format --dry-run --Werror
-                if [ $? -ne 0 ]; then
-                  echo "Clang-format check failed for modified lines in $file. Please format the file using clang-format."
-                  exit 1
-                fi
-              fi
-            else
-              # New file, format the entire file
-              clang-format --dry-run --Werror "$file"
-              if [ $? -ne 0 ]; then
-                echo "Clang-format check failed for new file $file. Please format the file using clang-format."
-                exit 1
-              fi
-            fi
+      - name: Find modified, new, and PR files
+        id: find_files
+        run: |
+          # Check for modified files in the pull request (if it's a PR)
+          if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
+            pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
+                    '*.proto' '*.cs' '*.m' '*.java' '*.js' '*.json')
+          else
+            pr_files=""
           fi
-        done
+
+          # Combine all files (modified, new, and PR files)
+          all_files=$(echo -e "$files\n$pr_files" | sort -u | tr '\n' ' ')
+          
+          echo "FILES=$all_files" >> $GITHUB_ENV
+          echo "Checking files: $all_files"
+
+      - name: Run git-clang-format and show differences
+        run: |
+          if [ -n "$FILES" ]; then
+            git-clang-format --diff $FILES
+            if ! git-clang-format --diff --files $FILES | grep -q "no modified files to format"; then
+              echo "Code not formatted correctly. Please run clang-format."
+              exit 1
+            fi
+          else
+            echo "No relevant files to check."
+          fi
