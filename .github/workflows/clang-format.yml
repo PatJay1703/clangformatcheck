@@ -36,15 +36,19 @@ jobs:
             echo "Failed to fetch the 'main' branch from origin."
             exit 1
           fi
-          
+
+          # Run git-clang-format and store the output
           output=$(git-clang-format origin/main --diff)
           echo "$output"
+
           if ! echo "$output" | grep -q "no modified files to format"; then
-            echo "Code formatting issues detected."
-            echo "Run the following command locally to fix them:"
+            echo "Formatting issues detected. Below are the required changes:"
+            echo "$output"  # Print the diff for contributors
+            echo "To resolve these issues, run the following command locally:"
             echo "  git-clang-format origin/main"
-            echo "After applying the changes, commit and push them to your branch."
-            exit 1
+            echo "After fixing the formatting, commit and push the changes."
+            exit 1  # Fail the workflow to enforce formatting
           fi
+
 
 
