@@ -50,15 +50,7 @@ jobs:
             echo "No relevant files to check with cppcheck."
           fi
 
-      - name: Run Doxygen Check (for documentation)
-        run: |
-          if [ -n "$FILES" ]; then
-            echo "Running Doxygen Documentation Check..."
-            doxygen -v $FILES
-            # You can also create custom checks for Doxygen documentation, e.g. missing @param or @returns
-          else
-            echo "No relevant files to check for Doxygen documentation."
-          fi
+      
 
       - name: Check for Missing Class Documentation
         run: |
