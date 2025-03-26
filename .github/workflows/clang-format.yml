@@ -52,8 +52,8 @@ jobs:
       - name: Run git-clang-format and show differences
         run: |
           if [ -n "$FILES" ]; then
-            git-clang-format --diff $FILES
-            if ! git-clang-format --diff  $FILES | grep -q "no modified files to format"; then
+              clang-format --diff --files $FILES
+            if ! git-clang-format --diff --files $FILES | grep -q "no modified files to format"; then
               echo "Code not formatted correctly. Please run clang-format."
               exit 1
             fi
