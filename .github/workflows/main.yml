@@ -1,0 +1,104 @@
+name: LLVM Coding Standards Check
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**/*.cpp'
+      - '**/*.h'
+
+jobs:
+  llvm-coding-standards:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensures the full history is fetched
+
+      - name: Fetch latest changes from remote
+        run: git fetch origin
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format cppcheck doxygen
+
+      - name: Find modified, new, and PR files
+        id: find_files
+        run: |
+          # Check for modified files in the pull request (if it's a PR)
+          if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
+            pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h')
+          else
+            pr_files=""
+          fi
+          # Combine all files (modified, new, and PR files)
+          all_files=$(echo -e "$pr_files" | sort -u | tr '\n' ' ')
+          echo "FILES=$all_files" >> $GITHUB_ENV
+          echo "Checking files: $all_files"
+
+     
+
+      - name: Run cppcheck (static analysis)
+        run: |
+          if [ -n "$FILES" ]; then
+            echo "Running static analysis (cppcheck)..."
+            cppcheck --enable=all --inconclusive --quiet --force $FILES
+          else
+            echo "No relevant files to check with cppcheck."
+          fi
+
+      - name: Run Doxygen Check (for documentation)
+        run: |
+          if [ -n "$FILES" ]; then
+            echo "Running Doxygen Documentation Check..."
+            doxygen -v $FILES
+            # You can also create custom checks for Doxygen documentation, e.g. missing @param or @returns
+          else
+            echo "No relevant files to check for Doxygen documentation."
+          fi
+
+      - name: Check for Missing Class Documentation
+        run: |
+          if [ -n "$FILES" ]; then
+            echo "Checking for missing class documentation..."
+            # Loop over each file to check for missing class documentation
+            missing_docs=()
+            for file in $FILES; do
+              if [[ $file == *.cpp || $file == *.h ]]; then
+                # Find classes that are missing the documentation
+                grep -n 'class ' "$file" | while read -r line; do
+                  class_line=$(echo $line | cut -d: -f1)
+                  prev_line=$(($class_line - 1))
+                  prev_line_content=$(sed -n "${prev_line}p" "$file")
+
+                  # Check if the previous line is a Doxygen comment (starts with ///)
+                  if [[ ! "$prev_line_content" =~ ^/// ]]; then
+                    missing_docs+=("$file:$class_line")
+                  fi
+                done
+              fi
+            done
+            
+            if [ ${#missing_docs[@]} -gt 0 ]; then
+              echo "The following classes are missing documentation:"
+              for doc in "${missing_docs[@]}"; do
+                echo "  $doc"
+              done
+              exit 1
+            else
+              echo "All classes are properly documented."
+            fi
+          else
+            echo "No relevant files to check for class documentation."
+          fi
+
+      - name: Report mistakes and failures
+        run: |
+          if [ -n "$FILES" ]; then
+            echo "LLVM Coding Standards Check complete. Check for any violations above."
+          else
+            echo "No files to check."
+          fi
