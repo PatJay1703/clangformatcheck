@@ -2,4 +2,4 @@
 using namespace std;
 
 
-int main(){cout<<"hellooo"; if(x>y){cout<<"hello";} return 0;}
+int main(){cout<<"helloooo"; if(x>y){cout<<"hello";} return 0;}
