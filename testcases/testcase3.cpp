@@ -35,7 +35,7 @@ int main()
   }
   
   int x= 10,y=20,z=30;
-  if(x>y&&y<z){cout<<"x is greater than y and y is less than z\n";} else {cout<<"Condition failed\n";}
+  if(x>y&&y==z){cout<<"x is greater than y and y is less than z\n";} else {cout<<"Condition failed\n";}
 
   // This part below has some issues that would fail clang-tidy
   int largeArray[10000];
