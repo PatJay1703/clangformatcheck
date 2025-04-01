@@ -23,7 +23,7 @@ def get_changed_lines():
                 changed_lines.add(i)
     return changed_lines
 
-# Function to run clang-format on specific lines
+# Function to run clang-format on specific lines and capture before/after formatting
 def format_lines(changed_lines, file_path):
     # Check if a .clang-format file exists in the root directory
     clang_format_config = ".clang-format"
@@ -33,14 +33,36 @@ def format_lines(changed_lines, file_path):
     if os.path.exists(clang_format_config):
         clang_format_cmd.append("-style=file")  # Use the style from the .clang-format file
     
+    # Capture the original content before formatting
+    with open(file_path, 'r') as file:
+        original_content = file.readlines()
+
+    # Format the file
     subprocess.run(clang_format_cmd)  # Run clang-format on the file
 
-    # After formatting, update the file with formatted content (no need for a temp file now)
+    # Capture the formatted content
     with open(file_path, 'r') as file:
         formatted_content = file.readlines()
+
+    # Compare the original and formatted lines and output changes
+    for line_num in changed_lines:
+        original_line = original_content[line_num - 1].strip()
+        formatted_line = formatted_content[line_num - 1].strip()
+
+        # Show the before and after for the specific line
+        print(f"Line {line_num}:")
+        print(f"Before formatting: {original_line}")
+        print(f"After formatting: {formatted_line}")
+        
+        # If there are differences, output the formatting issues
+        if original_line != formatted_line:
+            print(f"Formatting issue detected at line {line_num}. Here is how it should look:")
+            print(f"    {formatted_line}")
+        else:
+            print(f"No formatting issues for line {line_num}.")
     
-    with open(file_path, 'w') as file:
-        file.writelines(formatted_content)
+    return original_content, formatted_content
+
 
 def main():
     # Get the list of changed lines from the diff
@@ -64,7 +86,7 @@ def main():
     # Run clang-format on only the changed lines in each file
     for file_path in files_to_format:
         if os.path.exists(file_path):
-            format_lines(changed_lines, file_path)
+            original_content, formatted_content = format_lines(changed_lines, file_path)
 
 if __name__ == "__main__":
     main()

@@ -43,7 +43,7 @@ jobs:
         id: diff
         run: |
           git fetch origin
-          git diff --name-only origin/main..HEAD > changed_files.txt  # Corrected diff command
+          git diff --name-only origin/main..HEAD > changed_files.txt
           echo "Changed files: $(cat changed_files.txt)"
 
       - name: Show diff before formatting
