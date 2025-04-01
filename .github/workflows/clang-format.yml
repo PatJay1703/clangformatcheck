@@ -60,5 +60,10 @@ jobs:
           echo "Showing the diff after formatting:"
           git diff origin/main..HEAD
 
+      - name: Show formatted code
+        run: |
+          echo "Formatted code content:"
+          cat testcases/n1.cpp   # Print the formatted content of the file after running Python script
+
       - name: Commit formatted files
         run: git commit -am "Formatted changed lines"
