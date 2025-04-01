@@ -46,9 +46,19 @@ jobs:
           git diff --name-only origin/main..HEAD > changed_files.txt  # Corrected diff command
           echo "Changed files: $(cat changed_files.txt)"
 
+      - name: Show diff before formatting
+        run: |
+          echo "Showing the diff before formatting:"
+          git diff origin/main..HEAD
+
       - name: Run Python Formatter on Changed Files
         run: |
           python3 scripts/python_script.py   # Path to your Python script
+
+      - name: Show diff after formatting
+        run: |
+          echo "Showing the diff after formatting:"
+          git diff origin/main..HEAD
 
       - name: Commit formatted files
         run: git commit -am "Formatted changed lines"
