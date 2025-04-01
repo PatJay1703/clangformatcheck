@@ -1,8 +1,6 @@
 name: Clang Format Check
 
 on:
-  
-    
   pull_request:
     branches:
       - main
@@ -28,16 +26,25 @@ jobs:
         with:
           fetch-depth: 0  # Ensures the full history is fetched
 
-      - name: Fetch latest changes from remote
-        run: git fetch origin
+      - name: Fetch LLVM repository for formatting scripts
+        uses: actions/checkout@v4
+        with:
+          repository: llvm/llvm-project
+          ref: main
+          path: llvm-repo
 
-      - name: Install clang-format
-        run: sudo apt-get install -y clang-format
+      - name: Set up Python environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r llvm-repo/llvm/utils/git/requirements_formatting.txt
 
       - name: Find modified, new, and PR files
         id: find_files
         run: |
-         
           # Check for modified files in the pull request (if it's a PR)
           if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
             pr_files=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
@@ -50,11 +57,12 @@ jobs:
           
           echo "FILES=$all_files" >> $GITHUB_ENV
           echo "Checking files: $all_files"
-      - name: Run clang-format and show differences
+
+      - name: Run Python code formatter
         run: |
           if [ -n "$FILES" ]; then
-            # Run clang-format on the files
-            clang-format -i $FILES
+            # Run your Python script for formatting (assuming it's in llvm-repo directory)
+            python3 llvm-repo/llvm/utils/git/code-format-helper.py --files "$FILES"
             if ! git diff --quiet; then
               echo "Code not formatted correctly. Showing diff:"
               git diff --color
@@ -62,4 +70,11 @@ jobs:
             fi
           else
             echo "No relevant files to check."
-          fi 
+          fi
+
+      - name: Commit changes if any
+        run: |
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
+          git commit -am "Apply code formatting" || echo "No changes to commit"
+          git push
