@@ -41,6 +41,7 @@ bool CheckValue(int Val) {
 int main() {
     int A = 10;  
     if (A == 10) cout << "A is 10" << endl;
+   if(A==1)cout<<"A is 1"<<endl;
 
     for (int I = 0; I < 10; I++) {
         cout << I << endl;
