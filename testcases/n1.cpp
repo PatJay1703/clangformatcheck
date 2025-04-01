@@ -15,6 +15,7 @@ namespace llvm {
     private:
         int X;
     };
+    if(5>3){cout<<"ok";}
 
 } // End of llvm namespace
 
