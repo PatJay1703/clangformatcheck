@@ -5,7 +5,7 @@ import os
 # Function to extract changed lines from git diff
 def get_changed_lines():
     # Run git diff to get the diff between the current branch and the main branch
-    diff_command = ["git", "diff", "origin/main...HEAD"]
+    diff_command = ["git", "diff", "origin/main..HEAD"]  # Changed from ... to ..
     diff_output = subprocess.check_output(diff_command, encoding="utf-8")
 
     # Extract line numbers from the diff output
@@ -78,4 +78,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
