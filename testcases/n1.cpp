@@ -53,7 +53,7 @@ int main() {
 
     if (A == 10)
         cout << "A is still 10" << endl;
-
+    if(A==11){cout<<"A is 11 now"<<endl;
     FooClass Obj(42);  
     Obj.BarMethod(20);  
 
