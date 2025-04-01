@@ -1,4 +1,4 @@
-name: Clang Format Check
+name: Code Formatter
 
 on:
   pull_request:
@@ -18,79 +18,36 @@ on:
       - '**/*.cs'
 
 jobs:
-  code_formatter:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15  # Reduced timeout to speed up
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-      cancel-in-progress: true
+  format-check:
+    runs-on: ubuntu-latest
     steps:
-      # Checkout your own repository
-      - name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0  # Ensure the full history is fetched
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # Fetch the LLVM repository code formatting tools
-      - name: Fetch LLVM repository
-        uses: actions/checkout@v2
-        with:
-          repository: llvm/llvm-project
-          ref: main  # Or the branch you want to fetch from LLVM
-          fetch-depth: 0
-          path: llvm-repo
+      - name: Fetch Latest Changes
+        run: git fetch origin
 
-      # Install clang-format and git-clang-format from precompiled binaries
-      - name: Install clang-format and git-clang-format (Precompiled)
+      - name: Check if PR event
         run: |
-          # Install clang-format from apt
+          if [[ $GITHUB_EVENT_NAME != "pull_request" ]]; then
+            echo "Not a pull request event. Exiting."
+            exit 0
+          fi
+
+      - name: Install clang-format and Python
+        run: |
           sudo apt-get update
-          sudo apt-get install -y clang-format
+          sudo apt-get install clang-format python3
 
-          # Download precompiled git-clang-format binary for faster installation
-          wget https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.1/git-clang-format-linux-x86_64.tar.xz
-          tar -xvf git-clang-format-linux-x86_64.tar.xz
-          sudo mv git-clang-format /usr/local/bin/
-
-      # Install Python and dependencies
-      - name: Setup Python environment
-        uses: actions/setup-python@v5.4.0
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: 'llvm-repo/llvm/utils/git/requirements_formatting.txt'
-
-      - name: Install Python dependencies
-        run: pip install -r llvm-repo/llvm/utils/git/requirements_formatting.txt
-
-      # Get the list of changed files in the PR
-      - name: Get changed files
-        id: changed-files
-        uses: tj-actions/changed-files@fea790cb660e33aef4bdf07304e28fedd77dfa13 # v39.2.4
-        with:
-          separator: ","
-          skip_initial_fetch: true
-
-      # Run the Python code-format-helper.py script to check formatting
-      - name: Run code formatter using Python script
-        env:
-          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
-          START_REV: ${{ github.event.pull_request.base.sha }}
-          END_REV: ${{ github.event.pull_request.head.sha }}
-          CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+      - name: Get Changed Files
+        id: diff
         run: |
-          echo "[]" > comments &&
-          python ./llvm-repo/llvm/utils/git/code-format-helper.py \
-            --write-comment-to-file \
-            --token ${{ secrets.GITHUB_TOKEN }} \
-            --issue-number $GITHUB_PR_NUMBER \
-            --start-rev $(git merge-base $START_REV $END_REV) \
-            --end-rev $END_REV \
-            --changed-files "$CHANGED_FILES"
+          git diff --name-only origin/main...HEAD > changed_files.txt
+          echo "Changed files: $(cat changed_files.txt)"
 
-      # Upload the comments file as an artifact (if any formatting issues are detected)
-      - uses: actions/upload-artifact@v4.3.0
-        if: always()
-        with:
-          name: clang-format-comments
-          path: comments
+      - name: Run Python Formatter on Changed Files
+        run: |
+          python3 path/to/your/python_script.py
+
+      - name: Commit formatted files
+        run: git commit -am "Formatted changed lines"
