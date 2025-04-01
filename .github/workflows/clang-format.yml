@@ -40,6 +40,18 @@ jobs:
           fetch-depth: 0
           path: llvm-repo
 
+      # Install clang-format and git-clang-format
+      - name: Install clang-format and git-clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+          # Install git-clang-format
+          git clone https://github.com/llvm/llvm-project.git /tmp/llvm-project
+          cd /tmp/llvm-project && git checkout main
+          cd /tmp/llvm-project/clang/tools/clang-format
+          make
+          sudo make install
+
       # Install Python and dependencies
       - name: Setup Python environment
         uses: actions/setup-python@v5.4.0
