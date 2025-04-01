@@ -78,11 +78,13 @@ jobs:
             --issue-number $GITHUB_PR_NUMBER \
             --start-rev $(git merge-base $START_REV $END_REV) \
             --end-rev $END_REV \
-            --changed-files "$CHANGED_FILES"
+            --changed-files "$CHANGED_FILES" \
+            --output-replacements-xml > clang-format-diff.xml
 
-      # Upload the comments file as an artifact (if any formatting issues are detected)
-      - uses: actions/upload-artifact@v4.3.0
+      # Upload the clang-format differences (showing what was formatted vs. original code)
+      - name: Upload clang-format diff file
+        uses: actions/upload-artifact@v4.3.0
         if: always()
         with:
-          name: workflow-args
-          path: comments
+          name: clang-format-diff
+          path: clang-format-diff.xml
