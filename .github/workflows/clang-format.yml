@@ -20,7 +20,7 @@ on:
 jobs:
   code_formatter:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 15  # Reduced timeout to speed up
     concurrency:
       group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
       cancel-in-progress: true
@@ -40,17 +40,17 @@ jobs:
           fetch-depth: 0
           path: llvm-repo
 
-      # Install clang-format and git-clang-format
-      - name: Install clang-format and git-clang-format
+      # Install clang-format and git-clang-format from precompiled binaries
+      - name: Install clang-format and git-clang-format (Precompiled)
         run: |
+          # Install clang-format from apt
           sudo apt-get update
           sudo apt-get install -y clang-format
-          # Install git-clang-format
-          git clone https://github.com/llvm/llvm-project.git /tmp/llvm-project
-          cd /tmp/llvm-project && git checkout main
-          cd /tmp/llvm-project/clang/tools/clang-format
-          make
-          sudo make install
+
+          # Download precompiled git-clang-format binary for faster installation
+          wget https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.1/git-clang-format-linux-x86_64.tar.xz
+          tar -xvf git-clang-format-linux-x86_64.tar.xz
+          sudo mv git-clang-format /usr/local/bin/
 
       # Install Python and dependencies
       - name: Setup Python environment
