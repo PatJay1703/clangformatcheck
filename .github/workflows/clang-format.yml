@@ -40,10 +40,6 @@ jobs:
           fetch-depth: 0
           path: llvm-repo
 
-      # Install clang-format
-      - name: Install clang-format
-        run: sudo apt-get install -y clang-format
-
       # Install Python and dependencies
       - name: Setup Python environment
         uses: actions/setup-python@v5.4.0
@@ -63,8 +59,8 @@ jobs:
           separator: ","
           skip_initial_fetch: true
 
-      # Run the code formatting check using LLVM's code-format-helper.py
-      - name: Run code formatter
+      # Run the Python code-format-helper.py script to check formatting
+      - name: Run code formatter using Python script
         env:
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
           START_REV: ${{ github.event.pull_request.base.sha }}
@@ -78,13 +74,11 @@ jobs:
             --issue-number $GITHUB_PR_NUMBER \
             --start-rev $(git merge-base $START_REV $END_REV) \
             --end-rev $END_REV \
-            --changed-files "$CHANGED_FILES" \
-            --output-replacements-xml > clang-format-diff.xml
+            --changed-files "$CHANGED_FILES"
 
-      # Upload the clang-format differences (showing what was formatted vs. original code)
-      - name: Upload clang-format diff file
-        uses: actions/upload-artifact@v4.3.0
+      # Upload the comments file as an artifact (if any formatting issues are detected)
+      - uses: actions/upload-artifact@v4.3.0
         if: always()
         with:
-          name: clang-format-diff
-          path: clang-format-diff.xml
+          name: clang-format-comments
+          path: comments
