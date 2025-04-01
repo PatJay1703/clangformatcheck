@@ -5,7 +5,7 @@ import os
 # Function to extract changed lines from git diff
 def get_changed_lines():
     # Run git diff to get the diff between the current branch and the main branch
-    diff_command = ["git", "diff", "origin/main..HEAD"]  # Changed from ... to ..
+    diff_command = ["git", "diff", "origin/main..HEAD"]  # Correct diff command
     diff_output = subprocess.check_output(diff_command, encoding="utf-8")
 
     # Extract line numbers from the diff output
@@ -25,32 +25,22 @@ def get_changed_lines():
 
 # Function to run clang-format on specific lines
 def format_lines(changed_lines, file_path):
-    # Write a temporary file with only the changed lines
-    temp_file_path = "temp_file.cpp"
+    # Check if a .clang-format file exists in the root directory
+    clang_format_config = ".clang-format"
     
+    # Run clang-format on the file, ensuring the correct configuration is used
+    clang_format_cmd = ["clang-format", "-i", file_path]
+    if os.path.exists(clang_format_config):
+        clang_format_cmd.append("-style=file")  # Use the style from the .clang-format file
+    
+    subprocess.run(clang_format_cmd)  # Run clang-format on the file
+
+    # After formatting, update the file with formatted content (no need for a temp file now)
     with open(file_path, 'r') as file:
-        lines = file.readlines()
+        formatted_content = file.readlines()
     
-    # Create a temporary file with only the changed lines
-    with open(temp_file_path, 'w') as temp_file:
-        for i, line in enumerate(lines, 1):
-            if i in changed_lines:
-                temp_file.write(line)
-
-    # Run clang-format on the temporary file
-    subprocess.run(["clang-format", "-i", temp_file_path])
-
-    # Replace the original file with the formatted lines from temp_file
     with open(file_path, 'w') as file:
-        for i, line in enumerate(lines, 1):
-            if i in changed_lines:
-                # Replace the old line with the formatted line
-                file.write(open(temp_file_path).readlines()[i-1])
-            else:
-                file.write(line)
-
-    # Clean up temporary file
-    os.remove(temp_file_path)
+        file.writelines(formatted_content)
 
 def main():
     # Get the list of changed lines from the diff
