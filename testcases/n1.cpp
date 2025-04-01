@@ -41,6 +41,7 @@ bool CheckValue(int Val) {
 int main() {
     int A = 10;  
     if (A == 10) cout << "A is 10" << endl;
+     if (A == 10) cout << "A is 10" << endl;
 
     for (int I = 0; I < 10; I++) {
         cout << I << endl;
@@ -55,7 +56,9 @@ int main() {
         cout << "A is still 10" << endl;
 
     FooClass Obj(42);  
-    Obj.BarMethod(20);  
+    Obj.BarMethod(20); 
+    if (A == 10) cout << "A is 10" << endl;
+ 
 
     FooClass AnotherObj(5);  
 
