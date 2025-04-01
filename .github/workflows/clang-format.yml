@@ -61,8 +61,11 @@ jobs:
       - name: Run Python code formatter
         run: |
           if [ -n "$FILES" ]; then
-            # Run your Python script for formatting (assuming it's in llvm-repo directory)
-            python3 llvm-repo/llvm/utils/git/code-format-helper.py --files "$FILES"
+            # Run the Python script for formatting (assuming it's in llvm-repo directory)
+            python3 llvm-repo/llvm/utils/git/code-format-helper.py \
+              --start-rev $(git merge-base origin/main HEAD) \
+              --end-rev HEAD \
+              --changed-files "$FILES"
             if ! git diff --quiet; then
               echo "Code not formatted correctly. Showing diff:"
               git diff --color
