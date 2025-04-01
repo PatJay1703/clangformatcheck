@@ -27,16 +27,28 @@ jobs:
       - name: Fetch Latest Changes
         run: git fetch origin
 
+      - name: Check if PR event
+        run: |
+          if [[ $GITHUB_EVENT_NAME != "pull_request" ]]; then
+            echo "Not a pull request event. Exiting."
+            exit 0
+          fi
+
+      - name: Install clang-format and Python
+        run: |
+          sudo apt-get update
+          sudo apt-get install clang-format python3
+
       - name: Get Changed Files
         id: diff
         run: |
           git fetch origin
-          git diff --name-only origin/main..HEAD > changed_files.txt
+          git diff --name-only origin/main..HEAD > changed_files.txt  # Corrected diff command
           echo "Changed files: $(cat changed_files.txt)"
 
       - name: Run Python Formatter on Changed Files
         run: |
-          python3 scripts/python_script.py
+          python3 scripts/python_script.py   # Path to your Python script
 
       - name: Commit formatted files
         run: git commit -am "Formatted changed lines"
