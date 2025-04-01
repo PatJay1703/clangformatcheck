@@ -45,6 +45,7 @@ int main() {
     for (int I = 0; I < 10; I++) {
         cout << I << endl;
     }
+    if(A=='10')cout<<"help me with this"<<endl;
 
     vector<int> Vec = {1, 2, 3};
     for (int I = 0; I != Vec.size(); I++) {
