@@ -27,7 +27,7 @@ void foo(int x, int y) {
     for (int i = 0; i < 10; i++) {
         v.push_back(i);
     }
-    if (x == y) {
+    if (x >= y) {
       std::cout << "x is greater than y" << std::endl;
     } else {
       std::cout << "y is greater than x" << std::endl;
