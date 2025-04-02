@@ -9,8 +9,14 @@ else
     against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
 fi
 
-# Run clang-format on staged changes and capture the output
-clangformatout=$(git clang-format --diff --staged -q)
+# Define the file extensions to be checked
+extensions=("*.c" "*.cpp" "*.cc" "*.cxx" "*.java" "*.js" "*.json" "*.m" "*.h" "*.proto" "*.cs")
+
+# Find all staged files that match the given extensions
+files_to_check=$(git diff --cached --name-only --diff-filter=ACM | grep -E "$(IFS=\|; echo "${extensions[*]}")")
+
+# Run clang-format on the matched files
+clangformatout=$(git clang-format --diff --staged $files_to_check -q)
 
 # If there are formatting issues, show the differences
 if [ "$clangformatout" != "" ]
