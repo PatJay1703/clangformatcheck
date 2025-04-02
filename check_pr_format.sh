@@ -41,19 +41,21 @@ if [ -n "$clang_output" ] && ! echo "$clang_output" | grep -q "no modified files
     echo -e "\033[1;31m🚨 Format issues detected:\033[0m"
     echo -e "\033[1;37m--------------------------------------\033[0m"
 
-    # Show original unformatted code
+    # Extract original unformatted code from diff (lines starting with "---")
     echo -e "\033[1;31mOriginal Code (Unformatted):\033[0m"
     echo -e "\033[1;31m--------------------------------------\033[0m"
-    # Output the unformatted code by extracting it from the diff
-    echo "$clang_output" | grep -E "^---" | cut -d ' ' -f 2- 
+    echo "$clang_output" | grep -E "^\- " | cut -d ' ' -f 2- 
 
-    # Show formatted code
+    # Extract formatted code from diff (lines starting with "+")
     echo -e "\033[1;32mFormatted Code (After git clang-format):\033[0m"
     echo -e "\033[1;32m--------------------------------------\033[0m"
-    # Output the formatted code by extracting it from the diff
-    echo "$clang_output" | grep -E "^\+ " | cut -d ' ' -f 2- 
+    echo "$clang_output" | grep -E "^\+ " | cut -d ' ' -f 2-
 
-    
+    echo -e "\033[1;37m--------------------------------------\033[0m"
+    echo -e "\033[1;33m💡 Suggested Fix:\033[0m"
+    echo -e "   \033[1;32mgit clang-format $base_branch\033[0m"
+    echo -e "\033[1;34m📘 This will auto-fix the formatting for the changed lines.\033[0m"
+    exit 1
 else
     echo -e "\033[1;32m✅ No formatting issues detected!\033[0m"
     exit 0
