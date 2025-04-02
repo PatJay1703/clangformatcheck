@@ -38,6 +38,7 @@ int main() {
   int a = 10, b = 20;
   foo(a, b);
   return 0;
+  if(a==b){cout<<"this is same";}
   if (a == b)
     cout << "this is extra thing"
 }
