@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <iostream>
 #include <vector>
-
+int x=1e9+7;
 using namespace std;
 
 class Person {
