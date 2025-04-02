@@ -41,8 +41,10 @@ llvm_license="// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception"
 check_header_format() {
     file=$1
     if ! grep -q "$llvm_header_template" "$file"; then
+        echo ""
+        echo ""
         echo "❌ Missing or incorrect LLVM-style header comment block in $file"
-        echo "It should start with:"
+        echo "The file doesnt contain LLVM-HEADER-FILE, it should start with  :"
         echo "$llvm_header_template"
         echo "Followed by the SPDX-License-Identifier comment:"
         echo "$llvm_license"
