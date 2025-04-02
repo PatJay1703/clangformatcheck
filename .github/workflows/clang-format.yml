@@ -24,10 +24,13 @@ jobs:
     - name: Checkout the code
       uses: actions/checkout@v2
 
-    - name: Set up Clang-Format
+    - name: Set up Clang-Format and Python
       run: |
         sudo apt-get update
         sudo apt-get install clang-format
+        sudo apt-get install python3
+        sudo apt-get install python3-pip
+        pip3 install difflib
 
     - name: Identify the modified files
       id: modified-files
@@ -35,41 +38,8 @@ jobs:
         git diff --name-only ${{ github.event.before }} ${{ github.sha }} > modified_files.txt
         cat modified_files.txt
 
-    - name: Set Git user identity
+    
+
+    - name: Run Python script to format only changed lines
       run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
-
-    - name: Format only changed lines in existing files and show diff
-      run: |
-        # Loop through the modified files
-        while read file; do
-          # Check if file exists and is of the supported type
-          if [[ $file =~ \.(c|cpp|cc|cxx|java|js|json|m|h|proto|cs)$ ]]; then
-            # Check if the file is already committed in the repo
-            if [[ -f "$file" ]]; then
-              echo "Formatting $file"
-
-              # Get the diff for changed lines
-              git diff ${{ github.event.before }} ${{ github.sha }} -- $file > diff.txt
-
-              # Apply clang-format only to the changed lines
-              while read line; do
-                if [[ $line =~ ^\+ ]]; then  # Lines added in the diff
-                  echo "$line" | clang-format > formatted_line.txt
-                  cat formatted_line.txt >> formatted_code.txt
-                else
-                  echo "$line" >> formatted_code.txt
-                fi
-              done < diff.txt
-
-              # Show the difference between original code and formatted code
-              echo "Formatted diff for $file:"
-              diff -u "$file" formatted_code.txt
-            fi
-          fi
-        done < modified_files.txt
-
-    - name: Show original vs formatted code
-      run: |
-        echo "Clang-format has been applied to the modified files. Check the diffs above to see the changes."
+        python3 scripts/python_script.py
