@@ -3,13 +3,13 @@ import difflib
 
 # Get the list of modified files
 def get_modified_files():
-    result = subprocess.run(['git', 'diff', '--name-only', 'HEAD^', 'HEAD'], stdout=subprocess.PIPE)
+    result = subprocess.run(['git', 'diff', '--name-only', 'origin/main', 'HEAD'], stdout=subprocess.PIPE)
     modified_files = result.stdout.decode('utf-8').splitlines()
     return modified_files
 
 # Get the diff for the modified lines
 def get_diff(file):
-    result = subprocess.run(['git', 'diff', 'HEAD^', 'HEAD', '--', file], stdout=subprocess.PIPE)
+    result = subprocess.run(['git', 'diff', 'origin/main', 'HEAD', '--', file], stdout=subprocess.PIPE)
     return result.stdout.decode('utf-8')
 
 # Run clang-format on the changed lines
