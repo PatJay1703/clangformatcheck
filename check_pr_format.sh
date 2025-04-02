@@ -3,51 +3,58 @@
 # Usage: ./check_pr_format.sh <pr_number> [base_branch]
 # Example: ./check_pr_format.sh 123 main
 
-# Get input arguments
 pr_number=$1
 base_branch=${2:-main}
 
 # Check if PR number is provided
 if [ -z "$pr_number" ]; then
-    echo "❌ Usage: $0 <pr_number> [base_branch]"
+    echo -e "\033[1;31m❌ Usage: $0 <pr_number> [base_branch]\033[0m"
     exit 1
 fi
 
-# Create a local name for the PR branch
 pr_branch="pr-$pr_number"
 
-echo "📥 Fetching PR #$pr_number..."
-git fetch origin pull/$pr_number/head:$pr_branch || { echo "❌ Failed to fetch PR"; exit 1; }
+echo -e "\033[1;34m📥 Fetching PR #$pr_number...\033[0m"
+git fetch origin pull/$pr_number/head:$pr_branch || { echo -e "\033[1;31m❌ Failed to fetch PR\033[0m"; exit 1; }
 
 # Define extensions to check
 extensions="c|cpp|cc|cxx|java|js|json|m|h|proto|cs"
 
-echo "🔍 Finding files modified between $base_branch and $pr_branch..."
+echo -e "\033[1;36m🔍 Finding files modified between $base_branch and $pr_branch...\033[0m"
 modified_files=$(git diff --name-only $base_branch $pr_branch | grep -E "\.(${extensions})$")
 
 if [ -z "$modified_files" ]; then
-    echo "✅ No relevant files modified in this PR."
+    echo -e "\033[1;32m✅ No relevant files modified in this PR.\033[0m"
     exit 0
 fi
 
-echo "📂 Modified files:"
+echo -e "\033[1;33m📂 Modified files:\033[0m"
 echo "$modified_files"
 
 # Checkout to the PR branch
 git checkout $pr_branch >/dev/null
 
-echo "🧼 Running clang-format on modified lines..."
+echo -e "\033[1;35m🧼 Checking formatting issues with clang-format...\033[0m"
 clang_output=$(git clang-format $base_branch --diff -- $modified_files)
 
 if [ -n "$clang_output" ] && ! echo "$clang_output" | grep -q "no modified files to format"; then
-    echo " Format issues found:"
-    echo "--------------------------------------"
-    echo "$clang_output"
-    echo "--------------------------------------"
-    echo "💡 To fix formatting issues, run:"
-    echo "    git clang-format $base_branch"
-    exit 1
+    echo -e "\033[1;31m🚨 Format issues detected:\033[0m"
+    echo -e "\033[1;37m--------------------------------------\033[0m"
+
+    # Show original unformatted code
+    echo -e "\033[1;31mOriginal Code (Unformatted):\033[0m"
+    echo -e "\033[1;31m--------------------------------------\033[0m"
+    # Output the unformatted code by extracting it from the diff
+    echo "$clang_output" | grep -E "^---" | cut -d ' ' -f 2- 
+
+    # Show formatted code
+    echo -e "\033[1;32mFormatted Code (After git clang-format):\033[0m"
+    echo -e "\033[1;32m--------------------------------------\033[0m"
+    # Output the formatted code by extracting it from the diff
+    echo "$clang_output" | grep -E "^\+ " | cut -d ' ' -f 2- 
+
+    
 else
-    echo "✅ No formatting issues detected!"
+    echo -e "\033[1;32m✅ No formatting issues detected!\033[0m"
     exit 0
 fi
