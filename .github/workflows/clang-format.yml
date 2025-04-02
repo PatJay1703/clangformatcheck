@@ -1,7 +1,9 @@
-name: Format Code with Clang-Format
+name: Clang Format Check on PR
 
 on:
   pull_request:
+    branches:
+      - main
     paths:
       - '**/*.c'
       - '**/*.cpp'
@@ -14,32 +16,39 @@ on:
       - '**/*.h'
       - '**/*.proto'
       - '**/*.cs'
-    types: [opened, synchronize, reopened]
 
 jobs:
-  format:
+  clang-format:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout the code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-    - name: Set up Clang-Format and Python
-      run: |
-        sudo apt-get update
-        sudo apt-get install clang-format
-        sudo apt-get install python3
-       
-        
+      - name: Set up clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
 
-    - name: Identify the modified files
-      id: modified-files
-      run: |
-        git diff --name-only ${{ github.event.before }} ${{ github.sha }} > modified_files.txt
-        cat modified_files.txt
+      - name: Run clang-format on modified lines
+        run: |
+          # Find all modified files in the PR
+          MODIFIED_FILES=$(git diff --name-only origin/main...HEAD -- '*.cpp' '*.h' '*.c' '*.cc' '*.cxx' \
+                            '*.proto' '*.cs' '*.m' '*.java' '*.js' '*.json')
+          
+          # Loop over the modified files and run the git-clang-format-modified.sh script
+          for file in $MODIFIED_FILES; do
+            ./git-clang-format-modified.sh $file
+          done
 
-    
-
-    - name: Run Python script to format only changed lines
-      run: |
-        python3 scripts/python_script.py
+      - name: Check if code is formatted
+        run: |
+          if ! git diff --quiet; then
+            echo "Code is not formatted properly. Showing the diff:"
+            git diff --color
+            exit 1
+          else
+            echo "Code is formatted correctly!"
+          fi
