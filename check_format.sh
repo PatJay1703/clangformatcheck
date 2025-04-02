@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Check if we are on a valid commit
 if git rev-parse --verify HEAD >/dev/null 2>&1
@@ -10,8 +10,6 @@ else
 fi
 
 # Define the file extensions to be checked
-extensions=("*.c" "*.cpp" "*.cc" "*.cxx" "*.java" "*.js" "*.json" "*.m" "*.h" "*.proto" "*.cs")
-
 # Find all staged files that match the given extensions
 files_to_check=$(git diff --cached --name-only --diff-filter=ACM | grep -E "$(IFS=\|; echo "${extensions[*]}")")
 
