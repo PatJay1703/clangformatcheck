@@ -16,18 +16,20 @@ if [ -z "$MODIFIED_LINES" ]; then
   exit 0
 fi
 
-# Step 2: Extract the modified lines and create a temporary file
+# Step 2: Create a temporary file and insert modified lines
 TEMP_FILE=$(mktemp)
 echo "$MODIFIED_LINES" > $TEMP_FILE
 
-# Step 3: Run clang-format on the modified lines (this assumes clang-format is installed)
+# Step 3: Format the temporary file with clang-format
 clang-format -i $TEMP_FILE
 
-# Step 4: Replace the modified lines back in the original file
-# First, get the original content of the modified lines
-original_content=$(git show :$FILE | grep -E '^\+[^+]+' | sed 's/^+//')
+# Step 4: Replace modified lines back in the original file
+# This assumes you're handling the modified lines manually after formatting them.
 
-# Step 5: Commit the staged changes
+# This step would be more complex if you want to replace exact lines, but for now, you would
+# need to manually inspect the diff, or use a diff/patch tool to merge the changes back.
+
+# Step 5: Add the changes to staging area
 git add $FILE
 
 echo "Formatted modified lines and staged the changes."

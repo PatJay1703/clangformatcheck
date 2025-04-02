@@ -32,6 +32,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang-format
 
+      - name: Make script executable
+        run: chmod +x ./git-clang-format-modified.sh
+
       - name: Run clang-format on modified lines
         run: |
           # Find all modified files in the PR
