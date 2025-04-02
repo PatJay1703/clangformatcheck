@@ -35,7 +35,12 @@ jobs:
         git diff --name-only ${{ github.event.before }} ${{ github.sha }} > modified_files.txt
         cat modified_files.txt
 
-    - name: Format only changed lines in existing files
+    - name: Set Git user identity
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+
+    - name: Format only changed lines in existing files and show diff
       run: |
         # Loop through the modified files
         while read file; do
@@ -58,24 +63,13 @@ jobs:
                 fi
               done < diff.txt
 
-              # Overwrite the file with formatted content
-              mv formatted_code.txt $file
-              clang-format -i $file
+              # Show the difference between original code and formatted code
+              echo "Formatted diff for $file:"
+              diff -u "$file" formatted_code.txt
             fi
           fi
         done < modified_files.txt
 
-    - name: Show code diffs
+    - name: Show original vs formatted code
       run: |
-        echo "Showing differences between original and clang-formatted code:"
-        git diff
-
-    - name: Commit the formatted code
-      run: |
-        # Commit the changes made by clang-format
-        git add .
-        git diff --cached
-        git commit -m "Apply clang-format to modified files"
-        git push
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        echo "Clang-format has been applied to the modified files. Check the diffs above to see the changes."
