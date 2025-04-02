@@ -5,7 +5,6 @@ import difflib
 def get_modified_files():
     result = subprocess.run(['git', 'diff', '--name-only', 'HEAD^', 'HEAD'], stdout=subprocess.PIPE)
     modified_files = result.stdout.decode('utf-8').splitlines()
-    
     return modified_files
 
 # Get the diff for the modified lines
