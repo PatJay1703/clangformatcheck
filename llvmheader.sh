@@ -20,7 +20,7 @@ echo "📥 Fetching PR #$pr_number..."
 git fetch origin pull/$pr_number/head:$pr_branch || { echo "❌ Failed to fetch PR"; exit 1; }
 
 # Define extensions to check (only header files)
-extensions="h|hpp|hxx"
+extensions="c|cpp|cc|cxx|java|js|json|m|h|proto|cs"
 
 echo "🔍 Finding files modified between $base_branch and $pr_branch..."
 modified_files=$(git diff --name-only $base_branch $pr_branch | grep -E "\.(${extensions})$")
