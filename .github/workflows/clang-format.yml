@@ -1,9 +1,7 @@
-name: Code Formatter
+name: Format Code with Clang-Format
 
 on:
   pull_request:
-    branches:
-      - main
     paths:
       - '**/*.c'
       - '**/*.cpp'
@@ -16,49 +14,68 @@ on:
       - '**/*.h'
       - '**/*.proto'
       - '**/*.cs'
+    types: [opened, synchronize, reopened]
 
 jobs:
-  format-check:
+  format:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout the code
+      uses: actions/checkout@v2
 
-      - name: Fetch Latest Changes
-        run: git fetch origin
+    - name: Set up Clang-Format
+      run: |
+        sudo apt-get update
+        sudo apt-get install clang-format
 
-      - name: Check if PR event
-        run: |
-          if [[ $GITHUB_EVENT_NAME != "pull_request" ]]; then
-            echo "Not a pull request event. Exiting."
-            exit 0
+    - name: Identify the modified files
+      id: modified-files
+      run: |
+        git diff --name-only ${{ github.event.before }} ${{ github.sha }} > modified_files.txt
+        cat modified_files.txt
+
+    - name: Format only changed lines in existing files
+      run: |
+        # Loop through the modified files
+        while read file; do
+          # Check if file exists and is of the supported type
+          if [[ $file =~ \.(c|cpp|cc|cxx|java|js|json|m|h|proto|cs)$ ]]; then
+            # Check if the file is already committed in the repo
+            if [[ -f "$file" ]]; then
+              echo "Formatting $file"
+
+              # Get the diff for changed lines
+              git diff ${{ github.event.before }} ${{ github.sha }} -- $file > diff.txt
+
+              # Apply clang-format only to the changed lines
+              while read line; do
+                if [[ $line =~ ^\+ ]]; then  # Lines added in the diff
+                  echo "$line" | clang-format > formatted_line.txt
+                  cat formatted_line.txt >> formatted_code.txt
+                else
+                  echo "$line" >> formatted_code.txt
+                fi
+              done < diff.txt
+
+              # Overwrite the file with formatted content
+              mv formatted_code.txt $file
+              clang-format -i $file
+            fi
           fi
+        done < modified_files.txt
 
-      - name: Install clang-format and Python
-        run: |
-          sudo apt-get update
-          sudo apt-get install clang-format python3
+    - name: Show code diffs
+      run: |
+        echo "Showing differences between original and clang-formatted code:"
+        git diff
 
-      - name: Get Changed Files
-        id: diff
-        run: |
-          git fetch origin
-          git diff --name-only origin/main..HEAD > changed_files.txt
-          echo "Changed files: $(cat changed_files.txt)"
-
-      - name: Show diff before formatting
-        run: |
-          echo "Showing the diff before formatting:"
-          git diff origin/main..HEAD
-
-      - name: Run Python Formatter on Changed Files
-        run: |
-          python3 scripts/python_script.py   # Path to your Python script
-
-      - name: Show diff after formatting
-        run: |
-          echo "Showing the diff after formatting:"
-          git diff origin/main..HEAD
-
-      - name: Commit formatted files
-        run: git commit -am "Formatted changed lines"
+    - name: Commit the formatted code
+      run: |
+        # Commit the changes made by clang-format
+        git add .
+        git diff --cached
+        git commit -m "Apply clang-format to modified files"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
