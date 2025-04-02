@@ -37,6 +37,8 @@ void foo(int x, int y) {
 int main() {
   int a = 10, b = 20;
   foo(a, b);
+ if(5>3){cout<<"this is a good testcase"}'
+ else{cout<<"perform this";}
   return 0;
   if (a == b)
     cout << "this is extra thing"
