@@ -58,14 +58,23 @@ for file in $pr_files; do
 done
 
 if [ ${#missing_docs[@]} -gt 0 ]; then
-  echo "The following classes are missing class documentation(write what does the class does):"
+  echo "The following classes are missing class documentation (please add a Doxygen comment explaining what the class does):"
   for doc in "${missing_docs[@]}"; do
-    echo "  $doc"
+    file=$(echo $doc | cut -d: -f1)
+    line=$(echo $doc | cut -d: -f2)
 
+    echo "  File: $file, Line: $line"
+    echo "  Action: Please add a Doxygen comment above this class explaining its purpose and functionality."
+    echo "  Example:"
+    echo "    /**"
+    echo "     * @brief Class description: What this class does."
+    echo "     * @details More detailed explanation if needed."
+    echo "     */"
+    echo
   done
   exit 1
 else
   echo "All classes are properly documented."
 fi
 
-echo "LLVM CLASS CHECK COMPLETE "
+echo "LLVM CLASS CHECK COMPLETE"
