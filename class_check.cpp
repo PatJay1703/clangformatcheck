@@ -10,7 +10,8 @@ public:
 
 enum valueKind {  // Enum name starts with lowercase (violation)
     VALUE1,
-    VALUE2
+    VALUE2,
+    VAULU3,
 };
 
 int Leader = 0;  // Variable name starts with uppercase (violation)
