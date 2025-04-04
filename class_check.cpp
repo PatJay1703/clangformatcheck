@@ -4,7 +4,7 @@
 class TextFileReader {
 public:
     void OpenFile() {  // Function name starts with uppercase (violation)
-        std::cout << "Opening file..." << std::endl;
+        std::cout << "Opening file...." << std::endl;
     }
 };
 
