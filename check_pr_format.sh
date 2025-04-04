@@ -43,12 +43,13 @@ if [ -n "$clang_output" ] && ! echo "$clang_output" | grep -q "no modified files
 
     # Extract original unformatted code from diff (lines starting with "---")
     echo -e "\033[1;31mOriginal Code (Unformatted):\033[0m"
-    echo -e "\033[1;31m--------------------------------------\033[0m"
+    
     echo "$clang_output" | grep -E "^\- " | cut -d ' ' -f 2- 
 
     # Extract formatted code from diff (lines starting with "+")
-    echo -e "\033[1;32mFormatted Code (After git clang-format):\033[0m"
     echo -e "\033[1;32m--------------------------------------\033[0m"
+    echo -e "\033[1;32mFormatted Code (After git clang-format):\033[0m"
+    
     echo "$clang_output" | grep -E "^\+ " | cut -d ' ' -f 2-
 
     echo -e "\033[1;37m--------------------------------------\033[0m"
