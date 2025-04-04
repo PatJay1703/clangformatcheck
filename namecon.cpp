@@ -3,7 +3,7 @@
 class textFileReader {  // violation: class name starts with lowercase
 public:
     void OpenFile() {  // violation: function name starts with uppercase
-        std::cout << "Opening file..." << std::endl;
+        std::cout << "Opening file....." << std::endl;
     }
 };
 
