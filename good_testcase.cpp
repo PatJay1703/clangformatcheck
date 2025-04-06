@@ -15,6 +15,20 @@ cout<<"Name: "<<name<<endl;
 cout<<"Age: "<<age<<endl;
 }
 };
+class person1{
+    int age;
+    string name;
+    public:
+    person(string n, int a){name=n;age=a;}
+    void setName(string n){name=n;}
+    void setAge(int a){age=a;}
+    int getAge(){return age;}
+    string getName(){return name;}
+    void display(){
+    cout<<"Name: "<<name<<endl;
+    cout<<"Age: "<<age<<endl;
+    }
+    };
 
 class car{
 public:
