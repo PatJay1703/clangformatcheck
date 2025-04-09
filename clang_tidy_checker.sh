@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: ./clang-tidy-pr.sh <PR_NUMBER> [clang-tidy args]
+# Usage: ./clang_tidy_checker.sh <PR_NUMBER> [clang-tidy args]
 
 if [ $# -lt 1 ]; then
   echo "Usage: $0 <PR_NUMBER> [clang-tidy args]"
@@ -10,22 +10,29 @@ fi
 PR_NUMBER=$1
 shift
 
-if ! command -v gh &> /dev/null; then
-  echo "Error: GitHub CLI (gh) is required but not installed."
+BASE_BRANCH="main"  # Adjust if your base is something else
+PR_BRANCH="pr-$PR_NUMBER"
+
+# Fetch PR branch (from GitHub-style PR refs)
+echo "Fetching PR #$PR_NUMBER..."
+git fetch origin pull/$PR_NUMBER/head:$PR_BRANCH
+
+if [ $? -ne 0 ]; then
+  echo "Error: Failed to fetch PR #$PR_NUMBER"
   exit 1
+fi
+
+# Get the diff between base branch and PR branch
+DIFF=$(git diff $BASE_BRANCH...$PR_BRANCH -U0)
+
+if [ -z "$DIFF" ]; then
+  echo "No diff found between $BASE_BRANCH and $PR_BRANCH"
+  exit 0
 fi
 
 if [ ! -f clang-tidy-diff.py ]; then
   echo "Error: clang-tidy-diff.py script not found."
   exit 1
-fi
-
-echo "Fetching diff for PR #$PR_NUMBER..."
-DIFF=$(gh pr diff "$PR_NUMBER" --diff)
-
-if [ -z "$DIFF" ]; then
-  echo "No diff found for PR #$PR_NUMBER"
-  exit 0
 fi
 
 echo "Running clang-tidy on modified lines..."
