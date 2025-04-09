@@ -1,48 +1,64 @@
 #!/bin/bash
 
-# Usage: ./clang_tidy_checker.sh <PR_NUMBER> [clang-tidy args]
+# Usage: ./clang_tidy_pr.sh <pr_number> [base_branch]
+# Example: ./clang_tidy_pr.sh 123 main
 
-if [ $# -lt 1 ]; then
-  echo "Usage: $0 <PR_NUMBER> [clang-tidy args]"
-  exit 1
+pr_number=$1
+base_branch=${2:-main}
+
+# Check if PR number is provided
+if [ -z "$pr_number" ]; then
+    echo -e "\033[1;31m❌ Usage: $0 <pr_number> [base_branch]\033[0m"
+    exit 1
 fi
 
-PR_NUMBER=$1
-shift
+pr_branch="pr-$pr_number"
 
-BASE_BRANCH="main"  # Adjust if your base is something else
-PR_BRANCH="pr-$PR_NUMBER"
+echo -e "\033[1;34m📥 Fetching PR #$pr_number...\033[0m"
+git fetch origin pull/$pr_number/head:$pr_branch || { echo -e "\033[1;31m❌ Failed to fetch PR\033[0m"; exit 1; }
 
-# Fetch PR branch (from GitHub-style PR refs)
-echo "Fetching PR #$PR_NUMBER..."
-git fetch origin pull/$PR_NUMBER/head:$PR_BRANCH
+# Define extensions to check
+extensions="c|cpp|cc|cxx|java|js|json|m|h|proto|cs"
 
-if [ $? -ne 0 ]; then
-  echo "Error: Failed to fetch PR #$PR_NUMBER"
-  exit 1
+echo -e "\033[1;36m🔍 Finding files modified between $base_branch and $pr_branch...\033[0m"
+modified_files=$(git diff --name-only $base_branch $pr_branch | grep -E "\.(${extensions})$")
+
+if [ -z "$modified_files" ]; then
+    echo -e "\033[1;32m✅ No relevant files modified in this PR.\033[0m"
+    exit 0
 fi
 
-# Get the diff between base branch and PR branch
-DIFF=$(git diff $BASE_BRANCH...$PR_BRANCH -U0)
+echo -e "\033[1;33m📂 Modified files:\033[0m"
+echo "$modified_files"
+
+# Checkout to the PR branch
+git checkout $pr_branch >/dev/null
+
+# Fetch the diff of modified lines
+echo -e "\033[1;34m📂 Fetching diff for modified lines...\033[0m"
+DIFF=$(git diff $base_branch $pr_branch -- $modified_files)
 
 if [ -z "$DIFF" ]; then
-  echo "No diff found between $BASE_BRANCH and $PR_BRANCH"
-  exit 0
+    echo -e "\033[1;32m✅ No diffs found.\033[0m"
+    exit 0
 fi
 
+# Check if clang-tidy-diff.py script is available
 if [ ! -f clang-tidy-diff.py ]; then
-  echo "Error: clang-tidy-diff.py script not found."
-  exit 1
+    echo -e "\033[1;31m❌ clang-tidy-diff.py not found.\033[0m"
+    exit 1
 fi
 
-echo "Running clang-tidy on modified lines..."
-OUTPUT=$(echo "$DIFF" | python3 clang-tidy-diff.py -p1 "$@" 2>&1)
+# Run clang-tidy-diff.py on the diff and show output
+echo -e "\033[1;35m🧼 Running clang-tidy-diff.py on modified lines...\033[0m"
+OUTPUT=$(echo "$DIFF" | python3 clang-tidy-diff.py -p1)
 
 if [ $? -ne 0 ]; then
-  echo "clang-tidy encountered an error:"
-  echo "$OUTPUT"
-  exit 1
+    echo -e "\033[1;31m❌ clang-tidy-diff.py encountered an error:\033[0m"
+    echo "$OUTPUT"
+    exit 1
 fi
 
+# Display the clang-tidy-diff.py output
+echo -e "\033[1;32m✅ No issues detected by clang-tidy-diff.py!\033[0m"
 echo "$OUTPUT"
-echo "✅ clang-tidy check completed for modified lines in PR #$PR_NUMBER."
