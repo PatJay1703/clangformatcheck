@@ -5,6 +5,53 @@
 
 using namespace std;
 
+#include<iostream>
+using namespace std;
+
+class Employee{
+private:
+    string name;
+    int age;
+    double salary;
+public:
+    Employee(string n, int a, double s){
+        name=n;
+        age=a;
+        salary=s;
+    }
+    
+    void displayInfo(){
+        cout<<"Employee Name: "<<name<<endl;
+        cout<<"Employee Age: "<<age<<endl;
+        cout<<"Employee Salary: "<<salary<<endl;
+    }
+    
+    double getSalary(){
+        return salary;
+    }
+};
+
+class Manager: public Employee{
+private:
+    int teamSize;
+public:
+    Manager(string n, int a, double s, int t): Employee(n,a,s){
+        teamSize=t;
+    }
+
+    void displayInfo(){
+        Employee::displayInfo();
+        cout<<"Team Size: "<<teamSize<<endl;
+    }
+
+    void setTeamSize(int size){
+        teamSize=size;
+    }
+
+    int getTeamSize(){
+        return teamSize;
+    }
+};
 double circleArea(double radius) {
     return M_PI * radius * radius;
 }
@@ -39,7 +86,9 @@ int main() {
     for (int num : testNumbers) {
         cout << num << " is " << (isPrime(num) ? "prime" : "not prime") << endl;
     }
+    
 
-    return 0;
+    int x=5,y=10;cout<<x+y<<endl;return 0;}
+
 }
 
