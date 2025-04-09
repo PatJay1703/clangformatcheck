@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-
+#include<algorithm>
 void foo(int x, int y) {
     std::vector<int> v;
     for (int i = 0; i < 10; i++) {
