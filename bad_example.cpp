@@ -1,6 +1,8 @@
 #include<iostream>
 #include<vector>
 #include<algorithm>
+#include<bits/stdc++.h>
+
 
 using namespace std;
 
@@ -12,6 +14,14 @@ public:
     Person(string n, int a): name(n), age(a){};
     void display() { cout << "Name: " << name << ", Age: " << age << endl; }
 };
+void checkNumber(int num) {
+  if (num > 0) {
+      std::cout << "Positive" << std::endl;
+      return;
+  } else {  // This else is unnecessary after the return
+      std::cout << "Non-positive" << std::endl;
+  }
+}
 
 void sortNames(vector<Person> &people){
     sort(people.begin(), people.end(), [](const Person &a, const Person &b){
@@ -33,6 +43,7 @@ int main()
   {
     p.display();
   }
+
   
   int x= 10,y=20,z=30;
   if(x>y&&y<z){cout<<"x is greater than y and y is less than z\n";} else {cout<<"Condition failed\n";}
