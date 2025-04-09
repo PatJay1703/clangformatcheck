@@ -1,8 +1,12 @@
 #include <iostream>
+#include <algorithm>
 using namespace std;
 
 int calculateArea(int length, int width) {
     return length * width;
+}
+int calculateArea(int L, int W) {  
+    return L*W;  
 }
 
 int main() {
