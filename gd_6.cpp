@@ -1,4 +1,5 @@
 #include <iostream>
+#include<algorithm>
 using namespace std;
 #define MACRO 10   // Bad practice: Avoid macros for constants
 
