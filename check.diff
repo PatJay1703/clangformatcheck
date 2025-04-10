@@ -1,0 +1,35 @@
+diff --git a/good_example.cpp b/good_example.cpp
+index 4c0a48f..6d366b0 100644
+--- a/good_example.cpp
++++ b/good_example.cpp
+@@ -1,7 +1,11 @@
+ #include <iostream>
+-
++#include<algorithm>
+ using namespace std;
+ 
++int calculateArea(int L, int W) {  
++    return L*W;  
++}
++
+ int main() {
+   int x = 10;
+   cout << "Value of x: " << x << endl;
+diff --git a/ttcase.cpp b/ttcase.cpp
+index e678460..cf75ca0 100644
+--- a/ttcase.cpp
++++ b/ttcase.cpp
+@@ -1,9 +1,13 @@
+ #include <iostream>
++#include <algorithm>
+ using namespace std;
+ 
+ int calculateArea(int length, int width) {
+     return length * width;
+ }
++int calculateArea(int L, int W) {  
++    return L*W;  
++}
+ 
+ int main() {
+     int length = 5;
