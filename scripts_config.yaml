@@ -1,12 +1,4 @@
-eck_format: true
 check_pr_format: true
-clang_tidy_check: true
-clang_tidy_checker: true
 class_check: true
-git_clang_format_modified: true
 llvmheader: true
-naming_conventions_check: false
-pre_commit: true
-run_clang_tidy_for_prs: true
-:wq
-
+naming_conventions_check: true

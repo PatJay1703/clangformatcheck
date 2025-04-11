@@ -7,7 +7,10 @@ run_if_enabled() {
   local script=$2
   local needs_pr=$3
 
-  if yq e ".$key" "$CONFIG" | grep -q true; then
+  config_value=$(yq e ".$key" "$CONFIG")
+  echo "Config value for $key: $config_value"
+
+  if [[ "$config_value" == "true" ]]; then
     echo "✅ Running $script"
     if [ "$needs_pr" = true ]; then
       bash "$script" "$PR_NUMBER"
@@ -19,12 +22,16 @@ run_if_enabled() {
   fi
 }
 
+# List of all checks
+declare -A checks=(
+  ["check_pr_format"]="check_pr_format.sh true"
+  ["class_check"]="class_check.sh false"
+  ["llvmheader"]="llvmheader.sh false"
+  ["naming_conventions_check"]="naming_conventions_check.sh false"
+)
 
-run_if_enabled check_pr_format check_pr_format.sh true
-
-run_if_enabled class_check class_check.sh false
-
-run_if_enabled llvmheader llvmheader.sh false
-run_if_enabled naming_conventions_check naming_conventions_check.sh false
-
-
+# Loop through all checks
+for key in "${!checks[@]}"; do
+  IFS=" " read -r script needs_pr <<< "${checks[$key]}"
+  run_if_enabled "$key" "$script" "$needs_pr"
+done
