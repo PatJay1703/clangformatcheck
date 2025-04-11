@@ -12,35 +12,41 @@ if [ -z "$pr_number" ]; then
     exit 1
 fi
 
-# Step 1: Use GitHub API to get the PR source repo
+# Step 1: Get PR metadata via GitHub API
 echo -e "\033[1;34m🌐 Fetching PR metadata from GitHub...\033[0m"
 auth_header=""
-if [ -n "$GITHUB_TOKEN" ]; then
-    auth_header="-H \"Authorization: token $GITHUB_TOKEN\""
-fi
+[ -n "$GITHUB_TOKEN" ] && auth_header="Authorization: token $GITHUB_TOKEN"
 
-response=$(curl -s $auth_header https://api.github.com/repos/llvm/llvm-project/pulls/$pr_number)
+response=$(curl -s -H "$auth_header" https://api.github.com/repos/llvm/llvm-project/pulls/$pr_number)
 
-# Get source repo clone URL and branch
 source_repo=$(echo "$response" | jq -r .head.repo.clone_url)
 source_branch=$(echo "$response" | jq -r .head.ref)
 
-if [ "$source_repo" == "null" ] || [ "$source_branch" == "null" ]; then
-    echo -e "\033[1;31m❌ Could not fetch PR metadata. Invalid PR number?\033[0m"
+if [[ "$source_repo" == "null" || "$source_branch" == "null" ]]; then
+    echo -e "\033[1;31m❌ Invalid PR number or failed to fetch PR metadata.\033[0m"
     exit 1
 fi
 
 pr_branch="pr-$pr_number"
 
-# Step 2: Add source repo as remote and fetch the PR branch
-echo -e "\033[1;34m🔗 Adding temporary remote from $source_repo...\033[0m"
+# Step 2: Add remote and shallow fetch
+echo -e "\033[1;34m🔗 Adding remote from $source_repo...\033[0m"
 git remote add $remote_name "$source_repo" 2>/dev/null || true
-git fetch $remote_name $source_branch:$pr_branch || { echo -e "\033[1;31m❌ Failed to fetch PR branch\033[0m"; git remote remove $remote_name; exit 1; }
 
-# Step 3: Check for file modifications
+echo -e "\033[1;34m📥 Fetching PR #$pr_number from $source_repo (shallow)...\033[0m"
+git fetch --depth=1 $remote_name $source_branch:$pr_branch || {
+    echo -e "\033[1;31m❌ Failed to fetch PR branch.\033[0m"
+    git remote remove $remote_name
+    exit 1
+}
+
+# Step 3: Filter modified files
 extensions="c|cpp|cc|cxx|java|js|json|m|h|proto|cs"
 echo -e "\033[1;36m🔍 Finding modified files between $base_branch and $pr_branch...\033[0m"
-modified_files=$(git diff --name-only $base_branch $pr_branch | grep -E "\.(${extensions})$")
+
+modified_files=$(git diff --name-only $base_branch $pr_branch | \
+    grep -Ev ".*(pb|generated).*" | \
+    grep -E "\.(${extensions})$")
 
 if [ -z "$modified_files" ]; then
     echo -e "\033[1;32m✅ No relevant files modified in this PR.\033[0m"
@@ -51,9 +57,9 @@ fi
 echo -e "\033[1;33m📂 Modified files:\033[0m"
 echo "$modified_files"
 
+# Step 4: Check formatting
 git checkout $pr_branch >/dev/null
 
-# Step 4: Check formatting
 echo -e "\033[1;35m🧼 Checking formatting issues with clang-format...\033[0m"
 clang_output=$(git clang-format $base_branch --diff -- $modified_files)
 
