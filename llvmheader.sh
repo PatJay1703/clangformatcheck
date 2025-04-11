@@ -16,10 +16,17 @@ fi
 # Create a local name for the PR branch
 pr_branch="pr-$pr_number"
 
+# Check if currently on the same branch we want to fetch into
+current_branch=$(git symbolic-ref --short HEAD)
+if [ "$current_branch" == "$pr_branch" ]; then
+    echo "🔁 Currently on $pr_branch, switching to $base_branch to avoid fetch conflict..."
+    git checkout $base_branch || { echo "❌ Failed to checkout $base_branch"; exit 1; }
+fi
+
 echo "📥 Fetching PR #$pr_number..."
 git fetch origin pull/$pr_number/head:$pr_branch || { echo "❌ Failed to fetch PR"; exit 1; }
 
-# Define extensions to check (only header files)
+# Define extensions to check (includes header and source files)
 extensions="c|cpp|cc|cxx|java|js|json|m|h|proto|cs"
 
 echo "🔍 Finding files modified between $base_branch and $pr_branch..."
@@ -30,7 +37,7 @@ if [ -z "$modified_files" ]; then
     exit 0
 fi
 
-echo "📂 Modified header files:"
+echo "📂 Modified files:"
 echo "$modified_files"
 
 # LLVM header template to check for
@@ -42,18 +49,16 @@ check_header_format() {
     file=$1
     if ! grep -q "$llvm_header_template" "$file"; then
         echo ""
-        echo ""
         echo "❌ Missing or incorrect LLVM-style header comment block in $file"
-        echo "The file doesnt contain LLVM-HEADER-FILE, it should start with  :"
+        echo "Expected format:"
         echo "$llvm_header_template"
-        echo "Followed by the SPDX-License-Identifier comment:"
         echo "$llvm_license"
         return 1
     fi
     return 0
 }
 
-# Iterate through modified files and check each header
+# Iterate through modified files and check each one
 missing_headers=0
 for file in $modified_files; do
     if ! check_header_format "$file"; then
@@ -62,9 +67,9 @@ for file in $modified_files; do
 done
 
 if [ $missing_headers -gt 0 ]; then
-    echo "❌ $missing_headers header(s) missing proper LLVM-style comments."
+    echo "❌ $missing_headers file(s) missing proper LLVM-style comments."
     exit 1
 else
-    echo "✅ All modified headers have the correct LLVM-style comments!"
+    echo "✅ All modified files have the correct LLVM-style comments!"
     exit 0
 fi
