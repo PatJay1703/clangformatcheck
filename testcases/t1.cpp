@@ -18,6 +18,8 @@ int main(){
 int x=  42;
    if(x>0){
 cout<<"Hello, World!"<<endl;
-   }
+   
+}
+int add(int a,int b){return a+b;}
 return 0;}
 
