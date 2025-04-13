@@ -24,7 +24,10 @@ IFS=',' read -r -a skip_scripts <<< "$skip_list"
 # List all check scripts here (they should be in the same directory)
 scripts=(
   "check_pr_format.sh"
-  "check_docs.sh"
+  "class_check.sh"
+  "llvmheader.sh"
+  "naming_conventions_check.sh"
+  
 )
 
 echo -e "\033[1;36m📂 Running checks for PR #$pr_number on local repo...\033[0m"
